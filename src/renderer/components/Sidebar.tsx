@@ -1,0 +1,81 @@
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { createSession, deleteSession, setActiveSession } from '../store/chatSlice'
+import { toggleSidebar, toggleTheme, setShowSettings } from '../store/settingsSlice'
+import { LogoIcon, MenuIcon, PlusIcon, SettingsIcon, SunIcon, MoonIcon, TrashIcon } from './Icons'
+
+export default function Sidebar() {
+  const dispatch = useAppDispatch()
+  const sessions = useAppSelector((s) => s.chat.sessions)
+  const activeSessionId = useAppSelector((s) => s.chat.activeSessionId)
+  const collapsed = useAppSelector((s) => s.settings.sidebarCollapsed)
+  const theme = useAppSelector((s) => s.settings.theme)
+
+  if (collapsed) {
+    return (
+      <aside className="sidebar sidebar-collapsed">
+        <button className="icon-btn" onClick={() => dispatch(toggleSidebar())} aria-label="Expand sidebar">
+          <MenuIcon size={18} />
+        </button>
+        <button className="icon-btn" onClick={() => dispatch(setShowSettings(true))} aria-label="Settings" style={{ marginTop: '6px' }}>
+          <SettingsIcon size={18} />
+        </button>
+      </aside>
+    )
+  }
+
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-header">
+        <div className="sidebar-title">
+          <LogoIcon size={20} />
+          <span>Verdant</span>
+        </div>
+        <button className="icon-btn" onClick={() => dispatch(toggleSidebar())} aria-label="Collapse sidebar">
+          <MenuIcon size={18} />
+        </button>
+      </div>
+
+      <button className="new-session-btn" onClick={() => dispatch(createSession())}>
+        <PlusIcon size={14} />
+        New Chat
+      </button>
+
+      <div className="session-list" role="list">
+        {sessions.map((session) => (
+          <div
+            key={session.id}
+            className={`session-item ${activeSessionId === session.id ? 'active' : ''}`}
+            role="listitem"
+            onClick={() => dispatch(setActiveSession(session.id))}
+          >
+            <span className="session-name">{session.name}</span>
+            <button
+              className="session-delete"
+              onClick={(e) => {
+                e.stopPropagation()
+                dispatch(deleteSession(session.id))
+              }}
+              aria-label="Delete session"
+            >
+              <TrashIcon size={13} />
+            </button>
+          </div>
+        ))}
+        {sessions.length === 0 && (
+          <p className="empty-state">No conversations yet.<br />Click "New Chat" to start.</p>
+        )}
+      </div>
+
+      <div className="sidebar-footer">
+        <button className="footer-btn" onClick={() => dispatch(toggleTheme())}>
+          {theme === 'dark' ? <MoonIcon size={14} /> : <SunIcon size={14} />}
+          {theme === 'dark' ? 'Dark' : 'Light'}
+        </button>
+        <button className="footer-btn" onClick={() => dispatch(setShowSettings(true))}>
+          <SettingsIcon size={14} />
+          Settings
+        </button>
+      </div>
+    </aside>
+  )
+}
