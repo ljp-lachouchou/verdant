@@ -1,5 +1,5 @@
-import { spawn } from 'child_process'
-import { platform } from 'os'
+import { spawn, execSync } from 'child_process'
+import { existsSync } from 'fs'
 import type { Tool, ToolResult, ToolContext, ToolUpdateCallback } from './types'
 import type { VibeCodingConfig } from '@shared/types'
 
@@ -47,17 +47,37 @@ export class VibeCodingTool implements Tool {
       return { output: 'Error: prompt is required', isError: true }
     }
 
-    const workingDir = (args.working_dir as string) || this.config.workingDir || context.workingDirectory
+    const workingDir = (args.working_dir as string) || this.config.workingDir || context.workingDirectory || process.cwd()
     const timeout = this.config.timeout || context.timeout
 
     // Build command args from template
     const cliArgs = this.buildArgs(prompt)
 
-    const isWindows = platform() === 'win32'
-    const shell = isWindows ? 'cmd.exe' : 'bash'
-    const shellArgs = isWindows ? ['/c', this.config.cliPath, ...cliArgs] : ['-c', `"${this.config.cliPath} ${cliArgs.map(a => `'${a}'`).join(' ')}"`]
+    // Resolve CLI path — Electron GUI may not have /opt/homebrew/bin in PATH
+    let resolvedCliPath = this.config.cliPath
+    if (!resolvedCliPath.startsWith('/')) {
+      try {
+        // Try to resolve via login shell PATH
+        resolvedCliPath = execSync(`which ${resolvedCliPath} 2>/dev/null`, {
+          env: { ...process.env, SHELL: '/bin/bash' },
+          encoding: 'utf-8',
+          timeout: 3000
+        }).trim()
+        if (!resolvedCliPath) resolvedCliPath = this.config.cliPath
+      } catch {
+        // Fallback: try common paths
+        const commonPaths = ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin']
+        for (const dir of commonPaths) {
+          const fullPath = `${dir}/${this.config.cliPath}`
+          if (existsSync(fullPath)) {
+            resolvedCliPath = fullPath
+            break
+          }
+        }
+      }
+    }
 
-    console.log(`[VibeCoding] executing: ${this.config.cliPath} ${cliArgs.join(' ')}`)
+    console.log(`[VibeCoding] executing: ${resolvedCliPath} ${cliArgs.join(' ')}`)
     console.log(`[VibeCoding] working dir: ${workingDir}`)
     console.log(`[VibeCoding] prompt: ${prompt.substring(0, 100)}...`)
 
@@ -68,7 +88,7 @@ export class VibeCodingTool implements Tool {
       let stderr = ''
       let killed = false
 
-      const child = spawn(shell, shellArgs, {
+      const child = spawn(resolvedCliPath, cliArgs, {
         cwd: workingDir,
         env: { ...process.env, FORCE_COLOR: '0', TERM: 'dumb' },
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -141,10 +161,26 @@ export class VibeCodingTool implements Tool {
     }
 
     const template = this.config.argsTemplate
-    const rendered = template
-      .replace(/\{prompt\}/g, prompt)
-      .replace(/\{cwd\}/g, this.config.workingDir || process.cwd())
+    const cwd = this.config.workingDir || process.cwd()
 
-    return rendered.split(/\s+/).filter(s => s.length > 0)
+    // If template is just {prompt}, return prompt as single arg
+    if (template.trim() === '{prompt}') {
+      return [prompt]
+    }
+
+    // Split template by {prompt} placeholder, keep fixed parts as separate args
+    const parts = template.split('{prompt}')
+    const args: string[] = []
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i].replace(/\{cwd\}/g, cwd).trim()
+      if (part) {
+        args.push(...part.split(/\s+/).filter(s => s.length > 0))
+      }
+      if (i < parts.length - 1) {
+        args.push(prompt)
+      }
+    }
+
+    return args.length > 0 ? args : [prompt]
   }
 }
