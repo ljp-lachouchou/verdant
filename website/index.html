@@ -49,294 +49,150 @@
       border-bottom: 1px solid var(--border);
       padding: 14px 0;
     }
-    
-    nav .container {
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    
+    nav .container { display: flex; align-items: center; justify-content: space-between; }
     .nav-brand {
-      font-weight: 800; font-size: 18px;
-      color: var(--brand);
-      letter-spacing: -0.5px;
-      display: flex; align-items: center; gap: 8px;
+      font-weight: 800; font-size: 18px; color: var(--brand);
+      letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;
     }
-    
     .nav-brand-dot {
       width: 8px; height: 8px; border-radius: 50%;
-      background: var(--brand);
-      box-shadow: 0 0 12px var(--brand);
+      background: var(--brand); box-shadow: 0 0 12px var(--brand);
     }
-    
+    .nav-right { display: flex; align-items: center; gap: 24px; }
     .nav-links { display: flex; gap: 24px; }
     .nav-links a {
       color: var(--text-muted); text-decoration: none;
-      font-size: 14px; font-weight: 500;
-      transition: color 0.2s;
+      font-size: 14px; font-weight: 500; transition: color 0.2s;
     }
     .nav-links a:hover { color: var(--text); }
+    .lang-toggle {
+      background: var(--surface-2); border: 1px solid var(--border-hi);
+      border-radius: 100px; padding: 4px; display: flex; gap: 2px; cursor: pointer;
+    }
+    .lang-btn {
+      padding: 4px 10px; border-radius: 100px; border: none;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      background: transparent; color: var(--text-muted); transition: all 0.2s;
+    }
+    .lang-btn.active { background: var(--brand); color: #07080a; }
     
     /* Hero */
     .hero {
-      min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; position: relative; overflow: hidden;
     }
-    
     .hero::before {
-      content: '';
-      position: absolute;
-      width: 600px; height: 600px;
+      content: ''; position: absolute; width: 600px; height: 600px;
       border-radius: 50%;
       background: radial-gradient(circle, var(--brand-glow), transparent 70%);
       top: -200px; left: 50%; transform: translateX(-50%);
-      filter: blur(40px);
-      pointer-events: none;
+      filter: blur(40px); pointer-events: none;
     }
-    
     .hero-content { position: relative; z-index: 1; }
-    
     .hero-badge {
       display: inline-flex; align-items: center; gap: 6px;
-      background: var(--brand-soft);
-      border: 1px solid rgba(0, 229, 138, 0.2);
-      border-radius: 100px;
-      padding: 6px 16px;
-      font-size: 13px; font-weight: 500;
-      color: var(--brand);
-      margin-bottom: 28px;
+      background: var(--brand-soft); border: 1px solid rgba(0, 229, 138, 0.2);
+      border-radius: 100px; padding: 6px 16px;
+      font-size: 13px; font-weight: 500; color: var(--brand); margin-bottom: 28px;
     }
-    
     .hero h1 {
-      font-size: 72px; font-weight: 900;
-      letter-spacing: -2.5px;
-      margin-bottom: 20px;
-      line-height: 1.05;
+      font-size: 72px; font-weight: 900; letter-spacing: -2.5px;
+      margin-bottom: 20px; line-height: 1.05;
     }
-    
     .hero h1 .accent {
       background: linear-gradient(135deg, var(--brand) 0%, #00b870 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    
     .hero p {
       font-size: 19px; color: var(--text-muted);
-      max-width: 560px; margin: 0 auto 44px;
-      line-height: 1.6;
+      max-width: 560px; margin: 0 auto 44px; line-height: 1.6;
     }
-    
-    .download-btns {
-      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
-    }
-    
+    .download-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
     .btn {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 15px 32px;
-      border-radius: 12px;
-      font-size: 15px; font-weight: 600;
-      text-decoration: none;
+      padding: 15px 32px; border-radius: 12px;
+      font-size: 15px; font-weight: 600; text-decoration: none;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      border: none;
-      cursor: pointer;
+      border: none; cursor: pointer;
     }
-    
     .btn-primary {
-      background: linear-gradient(135deg, var(--brand), #00b870);
-      color: #07080a;
+      background: linear-gradient(135deg, var(--brand), #00b870); color: #07080a;
       box-shadow: 0 4px 24px rgba(0, 229, 138, 0.2);
     }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(0, 229, 138, 0.3);
-    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0, 229, 138, 0.3); }
+    .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-hi); }
+    .btn-secondary:hover { background: var(--surface-3); border-color: var(--text-dim); }
     
-    .btn-secondary {
-      background: var(--surface-2);
-      color: var(--text);
-      border: 1px solid var(--border-hi);
-    }
-    .btn-secondary:hover {
-      background: var(--surface-3);
-      border-color: var(--text-dim);
-    }
-    
-    .hero-stats {
-      display: flex; gap: 48px; justify-content: center;
-      margin-top: 64px;
-    }
-    
+    .hero-stats { display: flex; gap: 48px; justify-content: center; margin-top: 64px; }
     .stat { text-align: center; }
-    .stat-num {
-      font-size: 28px; font-weight: 800; color: var(--text);
-      font-variant-numeric: tabular-nums;
-    }
-    .stat-label {
-      font-size: 13px; color: var(--text-dim);
-      text-transform: uppercase; letter-spacing: 1px; margin-top: 2px;
-    }
+    .stat-num { font-size: 28px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+    .stat-label { font-size: 13px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
     
     /* Sections */
     section { padding: 100px 0; }
-    
     .section-tag {
-      display: inline-block;
-      font-size: 13px; font-weight: 600;
-      color: var(--brand);
-      text-transform: uppercase; letter-spacing: 1.5px;
-      margin-bottom: 12px;
+      display: inline-block; font-size: 13px; font-weight: 600;
+      color: var(--brand); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
     }
-    
-    .section-title {
-      font-size: 40px; font-weight: 800;
-      letter-spacing: -1px;
-      margin-bottom: 16px;
-    }
-    
-    .section-sub {
-      font-size: 17px; color: var(--text-muted);
-      max-width: 560px; margin-bottom: 56px;
-    }
+    .section-title { font-size: 40px; font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; }
+    .section-sub { font-size: 17px; color: var(--text-muted); max-width: 560px; margin-bottom: 56px; }
     
     /* Features */
     .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid var(--border);
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border);
+      border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border);
     }
-    
-    .feature-card {
-      background: var(--surface);
-      padding: 36px 32px;
-      transition: background 0.3s;
-      position: relative;
-    }
-    .feature-card:hover {
-      background: var(--surface-2);
-    }
-    .feature-card:hover .feature-icon-wrap {
-      border-color: var(--brand);
-      background: var(--brand-soft);
-    }
-    
+    .feature-card { background: var(--surface); padding: 36px 32px; transition: background 0.3s; }
+    .feature-card:hover { background: var(--surface-2); }
+    .feature-card:hover .feature-icon-wrap { border-color: var(--brand); background: var(--brand-soft); }
     .feature-icon-wrap {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      border: 1px solid var(--border-hi);
-      background: var(--surface-2);
+      width: 44px; height: 44px; border-radius: 12px;
+      border: 1px solid var(--border-hi); background: var(--surface-2);
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 20px;
-      transition: all 0.3s;
+      margin-bottom: 20px; transition: all 0.3s;
     }
-    
-    .feature-icon-wrap svg {
-      width: 22px; height: 22px;
-      stroke: var(--brand);
-      fill: none; stroke-width: 1.5;
-    }
-    
-    .feature-card h3 {
-      font-size: 17px; font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: -0.3px;
-    }
-    
-    .feature-card p {
-      color: var(--text-muted);
-      font-size: 14px;
-      line-height: 1.6;
-    }
+    .feature-icon-wrap svg { width: 22px; height: 22px; stroke: var(--brand); fill: none; stroke-width: 1.5; }
+    .feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
+    .feature-card p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
     
     /* Architecture */
     .arch-section { background: var(--surface); }
-    
     .arch-diagram { margin-top: 48px; }
-    
     .arch-layer {
-      border: 1px solid var(--border-hi);
-      border-radius: var(--radius);
-      padding: 28px;
-      position: relative;
-      background: var(--surface-2);
+      border: 1px solid var(--border-hi); border-radius: var(--radius);
+      padding: 28px; position: relative; background: var(--surface-2);
     }
-    
     .arch-layer-label {
       position: absolute; top: -11px; left: 24px;
-      background: var(--bg);
-      padding: 2px 14px;
-      font-size: 11px; font-weight: 700;
-      color: var(--brand);
+      background: var(--bg); padding: 2px 14px;
+      font-size: 11px; font-weight: 700; color: var(--brand);
       text-transform: uppercase; letter-spacing: 1px;
     }
-    
     .arch-layer.core { border-color: rgba(0, 229, 138, 0.3); }
     .arch-layer.core .arch-layer-label { background: var(--surface-2); }
-    
-    .arch-cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-top: 12px;
-    }
-    
-    .arch-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 18px 20px;
-    }
-    
-    .arch-card-title {
-      font-size: 14px; font-weight: 700;
-      color: var(--text);
-      margin-bottom: 6px;
-    }
-    
-    .arch-card-desc {
-      font-size: 12px; color: var(--text-dim);
-      line-height: 1.5;
-    }
-    
-    .arch-connector {
-      text-align: center;
-      padding: 20px 0;
-      position: relative;
-    }
+    .arch-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 12px; }
+    .arch-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 18px 20px; }
+    .arch-card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .arch-card-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+    .arch-connector { text-align: center; padding: 20px 0; position: relative; }
     .arch-connector::before {
-      content: '';
-      position: absolute;
-      left: 50%; top: 0; bottom: 0;
-      width: 1px;
-      background: linear-gradient(to bottom, var(--border-hi), transparent);
+      content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
+      width: 1px; background: linear-gradient(to bottom, var(--border-hi), transparent);
     }
     .arch-connector span {
-      position: relative;
-      background: var(--surface);
-      padding: 4px 16px;
+      position: relative; background: var(--surface); padding: 4px 16px;
       font-size: 11px; color: var(--text-dim);
       text-transform: uppercase; letter-spacing: 1px;
-      border: 1px solid var(--border);
-      border-radius: 100px;
+      border: 1px solid var(--border); border-radius: 100px;
     }
     
     /* Footer */
-    .footer {
-      padding: 48px 0;
-      border-top: 1px solid var(--border);
-      text-align: center;
-    }
-    .footer p {
-      font-size: 14px; color: var(--text-dim);
-    }
-    .footer a {
-      color: var(--brand); text-decoration: none;
-      font-weight: 500;
-    }
+    .footer { padding: 48px 0; border-top: 1px solid var(--border); text-align: center; }
+    .footer p { font-size: 14px; color: var(--text-dim); }
+    .footer a { color: var(--brand); text-decoration: none; font-weight: 500; }
+    
+    [data-i18n] { transition: opacity 0.15s; }
     
     @media (max-width: 768px) {
       .hero h1 { font-size: 44px; }
@@ -354,15 +210,18 @@
 <!-- Nav -->
 <nav>
   <div class="container">
-    <div class="nav-brand">
-      <span class="nav-brand-dot"></span>
-      Verdant
-    </div>
-    <div class="nav-links">
-      <a href="#features">Features</a>
-      <a href="#architecture">Architecture</a>
-      <a href="https://github.com/ljp-lachouchou/verdant/releases/latest">Download</a>
-      <a href="https://github.com/ljp-lachouchou/verdant">GitHub</a>
+    <div class="nav-brand"><span class="nav-brand-dot"></span>Verdant</div>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="#features" data-i18n="nav.features">Features</a>
+        <a href="#architecture" data-i18n="nav.architecture">Architecture</a>
+        <a href="https://github.com/ljp-lachouchou/verdant/releases/latest" data-i18n="nav.download">Download</a>
+        <a href="https://github.com/ljp-lachouchou/verdant">GitHub</a>
+      </div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('zh')">中</button>
+      </div>
     </div>
   </div>
 </nav>
@@ -373,24 +232,24 @@
     <div class="hero-content">
       <div class="hero-badge">
         <span style="width:6px;height:6px;border-radius:50%;background:var(--brand);display:inline-block;"></span>
-        v0.3.0 · Now with Multi-Agent & Skills
+        <span data-i18n="hero.badge">v0.3.0 · Now with Multi-Agent & Skills</span>
       </div>
-      <h1>Your AI<br><span class="accent">Desktop Butler</span></h1>
-      <p>Verdant is a multi-agent desktop assistant that manages files, controls browsers, writes code, and delegates work to parallel sub-agents — all through a natural conversation.</p>
+      <h1 data-i18n-html="hero.title">Your AI<br><span class="accent">Desktop Butler</span></h1>
+      <p data-i18n="hero.desc">Verdant is a multi-agent desktop assistant that manages files, controls browsers, writes code, and delegates work to parallel sub-agents — all through a natural conversation.</p>
       <div class="download-btns">
         <a class="btn btn-primary" href="https://github.com/ljp-lachouchou/verdant/releases/latest">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download
+          <span data-i18n="hero.download">Download</span>
         </a>
         <a class="btn btn-secondary" href="https://github.com/ljp-lachouchou/verdant">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
-          Star on GitHub
+          <span data-i18n="hero.github">Star on GitHub</span>
         </a>
       </div>
       <div class="hero-stats">
-        <div class="stat"><div class="stat-num">8</div><div class="stat-label">Built-in Tools</div></div>
-        <div class="stat"><div class="stat-num">62</div><div class="stat-label">Tests</div></div>
-        <div class="stat"><div class="stat-num">3</div><div class="stat-label">Platforms</div></div>
+        <div class="stat"><div class="stat-num">8</div><div class="stat-label" data-i18n="hero.stats.tools">Built-in Tools</div></div>
+        <div class="stat"><div class="stat-num">62</div><div class="stat-label" data-i18n="hero.stats.tests">Tests</div></div>
+        <div class="stat"><div class="stat-num">3</div><div class="stat-label" data-i18n="hero.stats.platforms">Platforms</div></div>
       </div>
     </div>
   </div>
@@ -399,112 +258,170 @@
 <!-- Features -->
 <section id="features">
   <div class="container">
-    <div class="section-tag">Capabilities</div>
-    <h2 class="section-title">Everything you need,<br>nothing you don't.</h2>
-    <p class="section-sub">A harness that empowers the model — not a workflow that constrains it. The model decides when to delegate, parallelize, and interact.</p>
-    
-    <div class="feature-grid">
-      <div class="feature-card">
-        <div class="feature-icon-wrap">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
-        </div>
-        <h3>Multi-Agent Collaboration</h3>
-        <p>Delegate tasks to parallel sub-agents via the task tool. Each sub-agent runs its own loop with full tool access.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrap">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
-        </div>
-        <h3>Browser Automation</h3>
-        <p>Built-in Playwright — navigate, click, type, screenshot, fill forms, and run JavaScript. Persistent sessions.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrap">
-          <svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z"/></svg>
-        </div>
-        <h3>Skill System</h3>
-        <p>Markdown-based skills with permission boundaries. Project-level takes precedence over global.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrap">
-          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-        </div>
-        <h3>Vibe Coding</h3>
-        <p>Delegate coding to external CLI tools — Claude Code, Aider, Codex. Automatic post-coding verification.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrap">
-          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg>
-        </div>
-        <h3>Context Management</h3>
-        <p>Token-aware compaction with soft-delete recovery. Atomic SQLite persistence. Crash-safe by design.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrap">
-          <svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-        </div>
-        <h3>Harness Architecture</h3>
-        <p>The model autonomously decides when to delegate, parallelize, and interact. No forced workflow constraints.</p>
-      </div>
-    </div>
+    <div class="section-tag" data-i18n="features.tag">Capabilities</div>
+    <h2 class="section-title" data-i18n-html="features.title">Everything you need,<br>nothing you don't.</h2>
+    <p class="section-sub" data-i18n="features.sub">A harness that empowers the model — not a workflow that constrains it. The model decides when to delegate, parallelize, and interact.</p>
+    <div class="feature-grid" id="feature-grid"></div>
   </div>
 </section>
 
 <!-- Architecture -->
 <section id="architecture" class="arch-section">
   <div class="container">
-    <div class="section-tag">Under the Hood</div>
-    <h2 class="section-title">Built as a Harness,<br>not a workflow engine.</h2>
-    <p class="section-sub">The harness provides capabilities — tools, memory, persistence, UI — without constraining the model's workflow. The model has final say.</p>
-    
-    <div class="arch-diagram">
-      <div class="arch-layer">
-        <span class="arch-layer-label">Renderer · React UI</span>
-        <div class="arch-cards">
-          <div class="arch-card">
-            <div class="arch-card-title">Sidebar</div>
-            <div class="arch-card-desc">Sessions, Skills browser, Settings</div>
-          </div>
-          <div class="arch-card">
-            <div class="arch-card-title">Chat Window</div>
-            <div class="arch-card-desc">Streaming messages, tool blocks, images</div>
-          </div>
-          <div class="arch-card">
-            <div class="arch-card-title">Status Panel</div>
-            <div class="arch-card-desc">Sub-agent monitor, coding pet</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="arch-connector"><span>IPC · contextBridge</span></div>
-      
-      <div class="arch-layer core">
-        <span class="arch-layer-label">Main Process · Agent Loop</span>
-        <div class="arch-cards">
-          <div class="arch-card">
-            <div class="arch-card-title">LLM Provider</div>
-            <div class="arch-card-desc">DeepSeek API · OpenAI-compatible · Streaming + tool_calls</div>
-          </div>
-          <div class="arch-card">
-            <div class="arch-card-title">Tool Registry</div>
-            <div class="arch-card-desc">bash, read, write, browser, task, skill, ask_user, vibe_coding</div>
-          </div>
-          <div class="arch-card">
-            <div class="arch-card-title">Context Engine</div>
-            <div class="arch-card-desc">Token compaction, SQLite persistence, file tracking</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div class="section-tag" data-i18n="arch.tag">Under the Hood</div>
+    <h2 class="section-title" data-i18n-html="arch.title">Built as a Harness,<br>not a workflow engine.</h2>
+    <p class="section-sub" data-i18n="arch.sub">The harness provides capabilities — tools, memory, persistence, UI — without constraining the model's workflow. The model has final say.</p>
+    <div class="arch-diagram" id="arch-diagram"></div>
   </div>
 </section>
 
 <!-- Footer -->
 <footer class="footer">
   <div class="container">
-    <p>Verdant · MIT License · <a href="https://github.com/ljp-lachouchou/verdant">GitHub</a> · Built with Electron + React</p>
+    <p>Verdant · MIT License · <a href="https://github.com/ljp-lachouchou/verdant">GitHub</a> · <span data-i18n="footer.built">Built with Electron + React</span></p>
   </div>
 </footer>
+
+<script>
+const i18n = {
+  en: {
+    'nav.features': 'Features',
+    'nav.architecture': 'Architecture',
+    'nav.download': 'Download',
+    'hero.badge': 'v0.3.0 · Now with Multi-Agent & Skills',
+    'hero.title': 'Your AI<br><span class="accent">Desktop Butler</span>',
+    'hero.desc': 'Verdant is a multi-agent desktop assistant that manages files, controls browsers, writes code, and delegates work to parallel sub-agents — all through a natural conversation.',
+    'hero.download': 'Download',
+    'hero.github': 'Star on GitHub',
+    'hero.stats.tools': 'Built-in Tools',
+    'hero.stats.tests': 'Tests',
+    'hero.stats.platforms': 'Platforms',
+    'features.tag': 'Capabilities',
+    'features.title': 'Everything you need,<br>nothing you don\'t.',
+    'features.sub': 'A harness that empowers the model — not a workflow that constrains it. The model decides when to delegate, parallelize, and interact.',
+    'arch.tag': 'Under the Hood',
+    'arch.title': 'Built as a Harness,<br>not a workflow engine.',
+    'arch.sub': 'The harness provides capabilities — tools, memory, persistence, UI — without constraining the model\'s workflow. The model has final say.',
+    'footer.built': 'Built with Electron + React',
+    features: [
+      { icon: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/>', title: 'Multi-Agent Collaboration', desc: 'Delegate tasks to parallel sub-agents via the task tool. Each sub-agent runs its own loop with full tool access.' },
+      { icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>', title: 'Browser Automation', desc: 'Built-in Playwright — navigate, click, type, screenshot, fill forms, and run JavaScript. Persistent sessions.' },
+      { icon: '<path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z"/>', title: 'Skill System', desc: 'Markdown-based skills with permission boundaries. Project-level takes precedence over global.' },
+      { icon: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>', title: 'Vibe Coding', desc: 'Delegate coding to external CLI tools — Claude Code, Aider, Codex. Automatic post-coding verification.' },
+      { icon: '<path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/>', title: 'Context Management', desc: 'Token-aware compaction with soft-delete recovery. Atomic SQLite persistence. Crash-safe by design.' },
+      { icon: '<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>', title: 'Harness Architecture', desc: 'The model autonomously decides when to delegate, parallelize, and interact. No forced workflow constraints.' }
+    ],
+    arch: {
+      renderer: 'Renderer · React UI',
+      main: 'Main Process · Agent Loop',
+      connector: 'IPC · contextBridge',
+      cards: [
+        { title: 'Sidebar', desc: 'Sessions, Skills browser, Settings' },
+        { title: 'Chat Window', desc: 'Streaming messages, tool blocks, images' },
+        { title: 'Status Panel', desc: 'Sub-agent monitor, coding pet' },
+        { title: 'LLM Provider', desc: 'DeepSeek API · OpenAI-compatible · Streaming + tool_calls' },
+        { title: 'Tool Registry', desc: 'bash, read, write, browser, task, skill, ask_user, vibe_coding' },
+        { title: 'Context Engine', desc: 'Token compaction, SQLite persistence, file tracking' }
+      ]
+    }
+  },
+  zh: {
+    'nav.features': '功能',
+    'nav.architecture': '架构',
+    'nav.download': '下载',
+    'hero.badge': 'v0.3.0 · 全新多智能体与技能系统',
+    'hero.title': '你的 AI<br><span class="accent">桌面管家</span>',
+    'hero.desc': 'Verdant 是一款多智能体桌面助手，能管理文件、控制浏览器、编写代码，并将工作委派给并行子智能体——一切通过自然对话完成。',
+    'hero.download': '下载',
+    'hero.github': 'GitHub 加星',
+    'hero.stats.tools': '内置工具',
+    'hero.stats.tests': '测试用例',
+    'hero.stats.platforms': '支持平台',
+    'features.tag': '核心能力',
+    'features.title': '你需要的一切，<br>没有多余的。',
+    'features.sub': '赋能模型的 Harness——不约束工作流。模型自主决定何时委派、并行和交互。',
+    'arch.tag': '内部架构',
+    'arch.title': '作为 Harness 构建，<br>而非工作流引擎。',
+    'arch.sub': 'Harness 提供能力——工具、记忆、持久化、UI——不约束模型工作流。模型拥有最终决策权。',
+    'footer.built': '基于 Electron + React 构建',
+    features: [
+      { icon: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/>', title: '多智能体协作', desc: '通过 task 工具将任务委派给并行子智能体。每个子智能体拥有独立循环和完整工具访问。' },
+      { icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>', title: '浏览器自动化', desc: '内置 Playwright——导航、点击、输入、截图、填表、执行 JS。会话持久化。' },
+      { icon: '<path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z"/>', title: '技能系统', desc: '基于 Markdown 的技能，带权限边界。项目级优先于全局级。' },
+      { icon: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>', title: 'Vibe Coding', desc: '委派编码任务给外部 CLI 工具——Claude Code、Aider、Codex。自动验证结果。' },
+      { icon: '<path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/>', title: '上下文管理', desc: 'Token 感知的自动压缩，软删除可恢复。原子化 SQLite 持久化。崩溃安全。' },
+      { icon: '<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>', title: 'Harness 架构', desc: '模型自主决定何时委派、并行和交互。不强制工作流约束。' }
+    ],
+    arch: {
+      renderer: '渲染进程 · React UI',
+      main: '主进程 · Agent Loop',
+      connector: 'IPC · contextBridge',
+      cards: [
+        { title: '侧边栏', desc: '会话列表、技能浏览、设置' },
+        { title: '聊天窗口', desc: '流式消息、工具块、图片' },
+        { title: '状态面板', desc: '子智能体监控、编程宠物' },
+        { title: 'LLM Provider', desc: 'DeepSeek API · OpenAI 兼容 · 流式 + tool_calls' },
+        { title: '工具注册表', desc: 'bash, read, write, browser, task, skill, ask_user, vibe_coding' },
+        { title: '上下文引擎', desc: 'Token 压缩、SQLite 持久化、文件追踪' }
+      ]
+    }
+  }
+};
+
+let currentLang = 'en';
+
+function setLang(lang) {
+  currentLang = lang;
+  const t = i18n[lang];
+  
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.textContent = t[key];
+  });
+  
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    if (t[key]) el.innerHTML = t[key];
+  });
+  
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent === (lang === 'en' ? 'EN' : '中'));
+  });
+  
+  renderFeatures(t);
+  renderArch(t);
+}
+
+function renderFeatures(t) {
+  const grid = document.getElementById('feature-grid');
+  grid.innerHTML = t.features.map(f => `
+    <div class="feature-card">
+      <div class="feature-icon-wrap"><svg viewBox="0 0 24 24">${f.icon}</svg></div>
+      <h3>${f.title}</h3>
+      <p>${f.desc}</p>
+    </div>
+  `).join('');
+}
+
+function renderArch(t) {
+  const diag = document.getElementById('arch-diagram');
+  const r = t.arch.cards.slice(0, 3);
+  const m = t.arch.cards.slice(3);
+  diag.innerHTML = `
+    <div class="arch-layer">
+      <span class="arch-layer-label">${t.arch.renderer}</span>
+      <div class="arch-cards">${r.map(c => `<div class="arch-card"><div class="arch-card-title">${c.title}</div><div class="arch-card-desc">${c.desc}</div></div>`).join('')}</div>
+    </div>
+    <div class="arch-connector"><span>${t.arch.connector}</span></div>
+    <div class="arch-layer core">
+      <span class="arch-layer-label">${t.arch.main}</span>
+      <div class="arch-cards">${m.map(c => `<div class="arch-card"><div class="arch-card-title">${c.title}</div><div class="arch-card-desc">${c.desc}</div></div>`).join('')}</div>
+    </div>
+  `;
+}
+
+setLang('en');
+</script>
 
 </body>
 </html>

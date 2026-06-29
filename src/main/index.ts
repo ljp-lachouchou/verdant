@@ -40,10 +40,12 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
+    title: 'Verdant',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     titleBarOverlay: process.platform === 'darwin'
       ? { height: 28 }
       : false,
+    icon: join(__dirname, '../../resources/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
