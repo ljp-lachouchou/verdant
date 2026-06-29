@@ -1,24 +1,46 @@
-appId: com.agent.codex-agent
-productName: Codex Agent
+appId: com.verdant.app
+productName: Verdant
 directories:
   buildResources: resources
   output: release
 files:
   - out/**/*
   - resources/**/*
+  - .verdant/skills/**/*
 mac:
   category: public.app-category.developer-tools
   target:
     - dmg
     - zip
+  icon: resources/icon.png
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: resources/entitlements.plist
+  entitlementsInherit: resources/entitlements.plist
 win:
   target:
     - nsis
-    - zip
+  icon: resources/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: Verdant-Setup-${version}.${ext}
 linux:
   target:
     - AppImage
     - deb
-nsis:
-  oneClick: false
-  allowToChangeInstallationDirectory: true
+  icon: resources/icon.png
+  category: Development
+dmg:
+  artifactName: Verdant-${version}-${arch}.${ext}
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+publish:
+  provider: github
+  owner: ljp-lachouchou
+  repo: verdant

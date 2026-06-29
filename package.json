@@ -1,10 +1,15 @@
 {
-  "name": "codex-agent",
-  "version": "0.2.0",
-  "description": "Codex-style desktop AI agent built with Electron, React, and Pi framework",
+  "name": "verdant",
+  "version": "0.3.0",
+  "description": "Verdant — Multi-agent desktop AI assistant",
   "main": "./out/main/index.js",
-  "author": "agent",
+  "author": "Verdant",
   "license": "MIT",
+  "homepage": "https://ljp-lachouchou.github.io/verdant",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ljp-lachouchou/verdant.git"
+  },
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",

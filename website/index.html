@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verdant — AI Desktop Assistant</title>
+  <meta name="description" content="Multi-agent desktop AI assistant with browser automation, skill system, and sub-agent collaboration.">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg: #0a0c0b;
+      --surface: #111413;
+      --surface-2: #181c1a;
+      --brand: #00e58a;
+      --brand-dim: #00b870;
+      --text: #e8efec;
+      --text-muted: #8a9690;
+      --border: #252a28;
+      --radius: 12px;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+    
+    /* Hero */
+    .hero {
+      padding: 100px 0 80px;
+      text-align: center;
+      background: radial-gradient(ellipse at top, rgba(0, 229, 138, 0.08), transparent 60%);
+    }
+    
+    .hero-logo {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+    
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dim) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .hero p {
+      font-size: 20px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+    
+    .download-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: 1px solid var(--border);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--brand), var(--brand-dim));
+      color: #0a0c0b;
+      border: none;
+      box-shadow: 0 4px 20px rgba(0, 229, 138, 0.25);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(0, 229, 138, 0.35);
+    }
+    
+    .btn-secondary {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+    
+    /* Features */
+    .features {
+      padding: 80px 0;
+    }
+    
+    .section-title {
+      font-size: 32px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: all 0.2s;
+    }
+    
+    .feature-card:hover {
+      border-color: var(--brand-dim);
+      transform: translateY(-2px);
+    }
+    
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+    
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    
+    /* Architecture */
+    .arch {
+      padding: 80px 0;
+      text-align: center;
+    }
+    
+    .arch-diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      margin: 32px auto;
+      max-width: 700px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      text-align: left;
+      color: var(--text-muted);
+      overflow-x: auto;
+    }
+    
+    .arch-diagram .highlight { color: var(--brand); }
+    
+    /* Footer */
+    .footer {
+      padding: 40px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .footer a {
+      color: var(--brand);
+      text-decoration: none;
+    }
+    
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 36px; }
+      .hero p { font-size: 16px; }
+      .download-btns { flex-direction: column; align-items: center; }
+      .btn { width: 100%; max-width: 280px; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-logo">🌿</div>
+    <h1>Verdant</h1>
+    <p>Multi-agent desktop AI assistant with browser automation, skill system, and sub-agent collaboration. Built with Electron + React.</p>
+    <div class="download-btns">
+      <a class="btn btn-primary" href="https://github.com/ljp-lachouchou/verdant/releases/latest">
+        ⬇ Download
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/ljp-lachouchou/verdant">
+        ★ GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <div class="container">
+    <h2 class="section-title">Features</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3>Multi-Agent Collaboration</h3>
+        <p>Delegate tasks to parallel sub-agents via the task tool. Each sub-agent has full tool access including skills.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3>Browser Automation</h3>
+        <p>Built-in Playwright browser tool — navigate, click, type, screenshot, fill forms, and run JavaScript.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Skill System</h3>
+        <p>Markdown-based skills with permission boundaries. Project-level, global, and compatible directory support.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔧</div>
+        <h3>Vibe Coding</h3>
+        <p>Delegate coding tasks to external CLI tools (Claude Code, Aider, Codex). Automatic screenshot verification.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3>Harness Architecture</h3>
+        <p>The model autonomously decides when to delegate, parallelize, and interact. No forced workflow constraints.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <h3>Context Management</h3>
+        <p>Token-aware compaction with soft-delete recovery. Atomic SQLite persistence. Crash-safe.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section class="arch">
+  <div class="container">
+    <h2 class="section-title">Architecture</h2>
+    <div class="arch-diagram">
+<span class="highlight">┌──────────────────────────────────────────────┐</span>
+│                <span class="highlight">Electron App</span>                    │
+│  ┌──────────┐  ┌─────────────┐  ┌────────────┐  │
+│  │ Sidebar  │  │  Chat Main  │  │ Status     │  │
+│  │ Sessions │  │  + Tools    │  │ + Sub-Agent│  │
+│  │ Skills   │  │  + Images   │  │ + Pet      │  │
+│  └──────────┘  └──────┬──────┘  └────────────┘  │
+│                       │ IPC                     │
+│  ┌────────────────────▼──────────────────────┐ │
+│  │            <span class="highlight">Agent Loop (Harness)</span>            │ │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────────┐ │ │
+│  │  │  LLM    │ │ Tools   │ │ Compaction  │ │ │
+│  │  │ DeepSeek│ │ + Task  │ │ + SQLite    │ │ │
+│  │  └─────────┘ │ + Skill │ └─────────────┘ │ │
+│  │              │ +Browser│                  │ │
+│  │              └─────────┘                  │ │
+│  └───────────────────────────────────────────┘ │
+<span class="highlight">└──────────────────────────────────────────────┘</span>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <p>Verdant · MIT License · <a href="https://github.com/ljp-lachouchou/verdant">GitHub</a> · Built with Electron + React</p>
+  </div>
+</footer>
+
+</body>
+</html>
