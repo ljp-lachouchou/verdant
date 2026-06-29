@@ -154,21 +154,93 @@
     }
     
     .arch-diagram {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 40px;
       margin: 32px auto;
-      max-width: 700px;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      font-size: 13px;
-      line-height: 1.8;
-      text-align: left;
-      color: var(--text-muted);
-      overflow-x: auto;
+      max-width: 800px;
     }
     
-    .arch-diagram .highlight { color: var(--brand); }
+    .arch-box {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+    }
+    
+    .arch-box-outer {
+      border-color: var(--brand-dim);
+      background: var(--surface);
+    }
+    
+    .arch-label {
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: var(--bg);
+      padding: 2px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .arch-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .arch-col {
+      flex: 1;
+      min-width: 180px;
+    }
+    
+    .arch-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      text-align: left;
+    }
+    
+    .arch-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--brand);
+      margin-bottom: 4px;
+    }
+    
+    .arch-card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    
+    .arch-arrow {
+      text-align: center;
+      color: var(--brand);
+      font-size: 20px;
+      margin: 8px 0;
+      line-height: 1;
+    }
+    
+    .arch-arrow-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    
+    .arch-core {
+      background: var(--surface-2);
+      border: 2px solid var(--brand-dim);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+    }
+    
+    @media (max-width: 640px) {
+      .arch-col { min-width: 100%; }
+    }
     
     /* Footer */
     .footer {
@@ -255,24 +327,58 @@
   <div class="container">
     <h2 class="section-title">Architecture</h2>
     <div class="arch-diagram">
-<span class="highlight">┌──────────────────────────────────────────────┐</span>
-│                <span class="highlight">Electron App</span>                    │
-│  ┌──────────┐  ┌─────────────┐  ┌────────────┐  │
-│  │ Sidebar  │  │  Chat Main  │  │ Status     │  │
-│  │ Sessions │  │  + Tools    │  │ + Sub-Agent│  │
-│  │ Skills   │  │  + Images   │  │ + Pet      │  │
-│  └──────────┘  └──────┬──────┘  └────────────┘  │
-│                       │ IPC                     │
-│  ┌────────────────────▼──────────────────────┐ │
-│  │            <span class="highlight">Agent Loop (Harness)</span>            │ │
-│  │  ┌─────────┐ ┌─────────┐ ┌─────────────┐ │ │
-│  │  │  LLM    │ │ Tools   │ │ Compaction  │ │ │
-│  │  │ DeepSeek│ │ + Task  │ │ + SQLite    │ │ │
-│  │  └─────────┘ │ + Skill │ └─────────────┘ │ │
-│  │              │ +Browser│                  │ │
-│  │              └─────────┘                  │ │
-│  └───────────────────────────────────────────┘ │
-<span class="highlight">└──────────────────────────────────────────────┘</span>
+      <div class="arch-box arch-box-outer">
+        <span class="arch-label">Electron App</span>
+        
+        <div class="arch-row">
+          <div class="arch-col">
+            <div class="arch-card">
+              <div class="arch-card-title">Sidebar</div>
+              <div class="arch-card-desc">Sessions, Skills, Settings</div>
+            </div>
+          </div>
+          <div class="arch-col">
+            <div class="arch-card">
+              <div class="arch-card-title">Chat Main</div>
+              <div class="arch-card-desc">Messages, Tools, Images</div>
+            </div>
+          </div>
+          <div class="arch-col">
+            <div class="arch-card">
+              <div class="arch-card-title">Status Panel</div>
+              <div class="arch-card-desc">Sub-Agents, Coding Pet</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="arch-arrow">↓</div>
+        <div class="arch-arrow-label">IPC (contextBridge)</div>
+        
+        <div class="arch-core">
+          <span class="arch-label">Agent Loop (Harness)</span>
+          
+          <div class="arch-row">
+            <div class="arch-col">
+              <div class="arch-card">
+                <div class="arch-card-title">LLM Provider</div>
+                <div class="arch-card-desc">DeepSeek API, OpenAI-compatible</div>
+              </div>
+            </div>
+            <div class="arch-col">
+              <div class="arch-card">
+                <div class="arch-card-title">Tool Registry</div>
+                <div class="arch-card-desc">bash, read, write, browser, task, skill, ask_user, vibe_coding</div>
+              </div>
+            </div>
+            <div class="arch-col">
+              <div class="arch-card">
+                <div class="arch-card-title">Context Engine</div>
+                <div class="arch-card-desc">Compaction, SQLite, Token tracking</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
