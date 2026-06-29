@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import type { Message, ContentBlock } from '@shared/types'
-import { UserIcon, AgentIcon, TerminalIcon, CheckIcon, ErrorIcon, ClockIcon } from './Icons'
+import { UserIcon, AgentIcon, TerminalIcon, CheckIcon, ErrorIcon, ClockIcon, ChevronDownIcon, ChevronRightIcon } from './Icons'
 
 interface MessageBubbleProps {
   message: Message
@@ -92,6 +93,26 @@ function ImageBlock({ block }: { block: ContentBlock }) {
   )
 }
 
+function SkillBlock({ block }: { block: ContentBlock }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div className="skill-block">
+      <div className="skill-block-header" onClick={() => setExpanded(!expanded)}>
+        <span className="skill-block-icon">⚡</span>
+        <span className="skill-block-name">{block.skillName || 'Skill'}</span>
+        <span className="skill-block-label">SKILL</span>
+        <span className="skill-block-expand">
+          {expanded ? <ChevronDownIcon size={12} /> : <ChevronRightIcon size={12} />}
+        </span>
+      </div>
+      {expanded && block.skillDescription && (
+        <div className="skill-block-description">{block.skillDescription}</div>
+      )}
+    </div>
+  )
+}
+
 function TextBlock({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
   if (!text) return null
   return (
@@ -134,6 +155,9 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
             }
             if (block.type === 'image') {
               return <ImageBlock key={i} block={block} />
+            }
+            if (block.type === 'skill') {
+              return <SkillBlock key={i} block={block} />
             }
             return <ToolBlock key={i} block={block} />
           })}

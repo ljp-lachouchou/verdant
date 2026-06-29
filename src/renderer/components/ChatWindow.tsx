@@ -1,12 +1,15 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import MessageBubble from './MessageBubble'
 import type { ContentBlock } from '@shared/types'
 import { setShowSettings } from '../store/settingsSlice'
 import { continueAfterWait } from '../store/chatSlice'
-import { LogoIcon, SettingsIcon, ErrorIcon, AgentIcon, TerminalIcon, CheckIcon, ClockIcon } from './Icons'
+import { LogoIcon, SettingsIcon, ErrorIcon, AgentIcon, TerminalIcon, CheckIcon, ClockIcon, ChevronDownIcon, ChevronRightIcon } from './Icons'
 
 function StreamingBlock({ block }: { block: ContentBlock }) {
+  if (block.type === 'skill') {
+    return <StreamingSkillBlock block={block} />
+  }
   if (block.type === 'text') {
     if (!block.text) return null
     return (
@@ -45,6 +48,26 @@ function StreamingBlock({ block }: { block: ContentBlock }) {
         <pre className="inline-tool-output">
           <code>{block.output.length > 800 ? block.output.substring(0, 800) + '\n...' : block.output}</code>
         </pre>
+      )}
+    </div>
+  )
+}
+
+function StreamingSkillBlock({ block }: { block: ContentBlock }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div className="skill-block">
+      <div className="skill-block-header" onClick={() => setExpanded(!expanded)}>
+        <span className="skill-block-icon">⚡</span>
+        <span className="skill-block-name">{block.skillName || 'Skill'}</span>
+        <span className="skill-block-label">SKILL</span>
+        <span className="skill-block-expand">
+          {expanded ? <ChevronDownIcon size={12} /> : <ChevronRightIcon size={12} />}
+        </span>
+      </div>
+      {expanded && block.skillDescription && (
+        <div className="skill-block-description">{block.skillDescription}</div>
       )}
     </div>
   )

@@ -5,6 +5,7 @@ import { TaskTool } from './task-tool'
 import { VibeCodingTool } from './vibe-coding-tool'
 import { BrowserTool } from './browser-tool'
 import { AskUserTool } from './ask-user-tool'
+import { SkillLoader, SkillTool } from './skill-tool'
 import type { TaskToolConfig } from './task-tool'
 import type { VibeCodingConfig } from '@shared/types'
 
@@ -34,15 +35,18 @@ export function createFullToolRegistry(): ToolRegistry {
   return registry
 }
 
-export function createMultiAgentToolRegistry(taskToolConfig: TaskToolConfig, vibeCodingConfig?: VibeCodingConfig): ToolRegistry {
+export function createMultiAgentToolRegistry(taskToolConfig: TaskToolConfig, vibeCodingConfig?: VibeCodingConfig, skillLoader?: SkillLoader): ToolRegistry {
   const registry = createFullToolRegistry()
   registry.set('task', new TaskTool(taskToolConfig))
   if (vibeCodingConfig?.enabled) {
     registry.set('vibe_coding', new VibeCodingTool(vibeCodingConfig))
   }
+  if (skillLoader && skillLoader.getAllSkills().length > 0) {
+    registry.set('skill', new SkillTool(skillLoader))
+  }
   return registry
 }
 
-export { ShellTool, PTYTool, FileReadTool, FileWriteTool, FileEditTool, ListDirectoryTool, TaskTool, VibeCodingTool, BrowserTool, AskUserTool }
+export { ShellTool, PTYTool, FileReadTool, FileWriteTool, FileEditTool, ListDirectoryTool, TaskTool, VibeCodingTool, BrowserTool, AskUserTool, SkillLoader, SkillTool }
 export type { Tool, ToolResult, ToolContext, ToolDefinition, ToolParameter } from './types'
 export type { TaskToolConfig } from './task-tool'

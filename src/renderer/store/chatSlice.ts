@@ -118,6 +118,11 @@ export const sendAgentMessage = createAsyncThunk(
       dispatch(chatSlice.actions.setStreamingSession(requestSessionId))
     }
 
+    // Listen for session title update (when first message renames session)
+    const sessionUpdatedUnsub = getAPI().onSessionUpdated?.((_session: { id: string; name: string }) => {
+      dispatch(initSessions())
+    })
+
     let streamDone = false
 
     const unsubscribe = getAPI().onAgentStream((event: AgentStreamEvent) => {
@@ -222,6 +227,7 @@ export const sendAgentMessage = createAsyncThunk(
     } finally {
       unsubscribe()
       sessionCreatedUnsub?.()
+      sessionUpdatedUnsub?.()
       // Only clear if this is still our request
       const finalState = getState() as { chat: ChatState }
       if (finalState.chat.activeRequestId === requestId) {
@@ -369,6 +375,21 @@ const chatSlice = createSlice({
                   imageAlt: 'Screenshot'
                 })
               }
+
+              // If this is a skill tool, push a skill block
+              if (event.name === 'skill' && !event.isError) {
+                const nameMatch = event.output?.match(/name="([^"]+)"/)
+                const skillName = nameMatch?.[1] || 'unknown'
+                // Extract description from first paragraph after title
+                const descMatch = event.output?.match(/^#\s+.*?\n\n([\s\S]*?)(?:\n\n|\n##)/)
+                const skillDesc = descMatch?.[1]?.trim() || ''
+                state.streamingBlocks.splice(i + 1, 0, {
+                  type: 'skill',
+                  skillName,
+                  skillDescription: skillDesc
+                })
+              }
+
               break
             }
           }

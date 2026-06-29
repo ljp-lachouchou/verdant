@@ -2,7 +2,7 @@ export type MessageRole = 'system' | 'user' | 'assistant' | 'tool'
 
 export type MessageType = 'text' | 'tool_use' | 'tool_result' | 'summary' | 'steering' | 'notification'
 
-export type ContentBlockType = 'text' | 'tool_call' | 'image'
+export type ContentBlockType = 'text' | 'tool_call' | 'image' | 'skill'
 
 export interface ContentBlock {
   type: ContentBlockType
@@ -13,6 +13,8 @@ export interface ContentBlock {
   status?: 'pending' | 'running' | 'success' | 'error'
   imagePath?: string
   imageAlt?: string
+  skillName?: string
+  skillDescription?: string
 }
 
 export interface Message {

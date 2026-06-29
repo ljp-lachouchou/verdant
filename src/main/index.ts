@@ -11,7 +11,7 @@ import { OpenAILLMProvider } from '@agent/llm-provider'
 import { StubLLMProvider } from '@agent/stub-provider'
 import { DEFAULT_CONFIG, type LLMProvider } from '@agent/types'
 import { HARNESS_SYSTEM_PROMPT } from '@agent/prompts'
-import { createMultiAgentToolRegistry, createFullToolRegistry, TaskTool, AskUserTool } from '@tools/registry'
+import { createMultiAgentToolRegistry, createFullToolRegistry, TaskTool, AskUserTool, SkillLoader } from '@tools/registry'
 import { ShellTool } from '@tools/shell'
 import {
   DatabaseManager,
@@ -100,6 +100,8 @@ function saveConfig(): void {
   }
 }
 
+let globalSkillLoader: SkillLoader = new SkillLoader()
+
 function createLLMProvider(): LLMProvider {
   if (currentConfig.apiKey) {
     const registry = createMultiAgentToolRegistry({
@@ -108,7 +110,7 @@ function createLLMProvider(): LLMProvider {
       toolFactory: () => createFullToolRegistry(),
       parentCallbacks: {},
       parentSessionId: ''
-    }, currentConfig.vibeCoding || { enabled: false, cliPath: '', argsTemplate: '{prompt}', workingDir: '', timeout: 120000 })
+    }, currentConfig.vibeCoding || { enabled: false, cliPath: '', argsTemplate: '{prompt}', workingDir: '', timeout: 120000 }, globalSkillLoader)
     const provider = new OpenAILLMProvider(
       Array.from(registry.values()).map(t => t.definition)
     )
@@ -200,9 +202,18 @@ function registerIpcHandlers(): void {
     }
 
     if (!currentSessionId) {
-      const session = sessionRepo.create()
+      const sessionName = userInput.length > 30 ? userInput.substring(0, 30) + '...' : userInput
+      const session = sessionRepo.create(sessionName)
       currentSessionId = session.id
       mainWindow?.webContents.send('session:created', session)
+    } else {
+      // If session name is default (time-based), update it with first user input
+      const existingSession = sessionRepo.getById(currentSessionId)
+      if (existingSession && (existingSession.name.startsWith('Session ') || existingSession.name.startsWith('New Session'))) {
+        const sessionName = userInput.length > 30 ? userInput.substring(0, 30) + '...' : userInput
+        sessionRepo.update(currentSessionId, sessionName)
+        mainWindow?.webContents.send('session:updated', { id: currentSessionId, name: sessionName })
+      }
     }
 
     const activeSessionId = currentSessionId
@@ -214,7 +225,12 @@ function registerIpcHandlers(): void {
 
     llmProvider = createLLMProvider()
 
-    const systemPrompt = HARNESS_SYSTEM_PROMPT
+    // Load skills
+    const skillLoader = new SkillLoader()
+    skillLoader.loadAll(process.cwd())
+    globalSkillLoader = skillLoader
+    const skillsText = skillLoader.getSkillListText()
+    const systemPrompt = HARNESS_SYSTEM_PROMPT + skillsText
 
     const agentCallbacks = {
       onToken: (token: string) => {
@@ -323,7 +339,7 @@ function registerIpcHandlers(): void {
       parentSessionId: activeSessionId
     }
     const vibeConfig = currentConfig.vibeCoding || { enabled: false, cliPath: '', argsTemplate: '{prompt}', workingDir: '', timeout: 120000 }
-    const toolRegistry = createMultiAgentToolRegistry(taskToolConfig, vibeConfig)
+    const toolRegistry = createMultiAgentToolRegistry(taskToolConfig, vibeConfig, skillLoader)
     activeTaskTool = toolRegistry.get('task') as TaskTool | null
 
     // Set up ask_user tool callback — wait for user confirmation via IPC

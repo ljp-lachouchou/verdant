@@ -46,7 +46,11 @@ export default function Sidebar() {
             key={session.id}
             className={`session-item ${activeSessionId === session.id ? 'active' : ''}`}
             role="listitem"
-            onClick={() => dispatch(setActiveSession(session.id))}
+            onClick={() => {
+              if (activeSessionId !== session.id) {
+                dispatch(setActiveSession(session.id))
+              }
+            }}
           >
             <span className="session-name">{session.name}</span>
             <button

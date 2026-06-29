@@ -41,6 +41,12 @@ const api = {
     return () => ipcRenderer.removeListener('session:created', handler)
   },
 
+  onSessionUpdated: (callback: (session: { id: string; name: string }) => void) => {
+    const handler = (_event: unknown, data: { id: string; name: string }) => callback(data)
+    ipcRenderer.on('session:updated', handler)
+    return () => ipcRenderer.removeListener('session:updated', handler)
+  },
+
   getTitleBarHeight: (): number => {
     try {
       const wco = (navigator as unknown as { windowControlsOverlay?: { getTitlebarRect: () => { height: number } } }).windowControlsOverlay

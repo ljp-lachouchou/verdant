@@ -1608,6 +1608,69 @@ body {
   color: var(--text-3);
 }
 
+/* Skill Block */
+.skill-block {
+  margin: 6px 0;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.skill-block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.skill-block-header:hover {
+  background: var(--bg-3);
+}
+
+.skill-block-icon {
+  font-size: 14px;
+  color: var(--brand);
+}
+
+.skill-block-name {
+  font-weight: 600;
+  color: var(--text-1);
+  font-size: 13px;
+  flex: 1;
+}
+
+.skill-block-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--brand);
+  background: var(--brand-soft);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.skill-block-expand {
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+}
+
+.skill-block-description {
+  padding: 0 14px 12px 40px;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.5;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 2px;
+}
+
 .message-content .md-table th {
   background: var(--bg-3);
   padding: 8px 12px;
