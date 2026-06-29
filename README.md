@@ -67,6 +67,20 @@ A multi-agent desktop AI assistant built with Electron + React, powered by a Har
 
 ## Getting Started
 
+### Download Pre-built Release
+
+Download the latest version from [GitHub Releases](https://github.com/ljp-lachouchou/verdant/releases/latest).
+
+**Installation notes:**
+
+| Platform | File | Note |
+|----------|------|------|
+| macOS | `.dmg` | If you see "app is damaged", run: `xattr -cr /Applications/Verdant.app` |
+| Windows | `.exe` | Click "More info" → "Run anyway" if SmartScreen warns |
+| Linux | `.AppImage` | Run `chmod +x Verdant-*.AppImage && ./Verdant-*.AppImage` |
+
+### Build from Source
+
 ```bash
 # Install dependencies
 npm install

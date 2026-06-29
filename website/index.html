@@ -314,6 +314,16 @@
   </div>
 </section>
 
+<!-- Install Guide -->
+<section id="install" style="padding: 80px 0; background: var(--surface);">
+  <div class="container">
+    <div class="section-tag" data-i18n="install.tag">Installation</div>
+    <h2 class="section-title" data-i18n-html="install.title">Download & Install</h2>
+    <p class="section-sub" data-i18n="install.sub">Available for macOS, Windows, and Linux. No account required.</p>
+    <div id="install-cards"></div>
+  </div>
+</section>
+
 <!-- Features -->
 <section id="features">
   <div class="container">
@@ -364,6 +374,11 @@ const i18n = {
     'arch.title': 'Built as a Harness,<br>not a workflow engine.',
     'arch.sub': 'The harness provides capabilities — tools, memory, persistence, UI — without constraining the model\'s workflow. The model has final say.',
     'footer.built': 'Built with Electron + React',
+    install: [
+      { icon: '<path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/><path d="M12 22V12M2 7l10 5 10-5"/>', name: 'macOS', file: '.dmg', note: 'If "app is damaged", run: xattr -cr /Applications/Verdant.app' },
+      { icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>', name: 'Windows', file: '.exe', note: 'Click "More info" → "Run anyway" if SmartScreen warns' },
+      { icon: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a14 14 0 0 1 0 20M12 2a14 14 0 0 0 0 20"/>', name: 'Linux', file: '.AppImage', note: 'chmod +x Verdant-*.AppImage && ./Verdant-*.AppImage' }
+    ],
     features: [
       { icon: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/>', title: 'Multi-Agent Collaboration', desc: 'Delegate tasks to parallel sub-agents via the task tool. Each sub-agent runs its own loop with full tool access.' },
       { icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>', title: 'Browser Automation', desc: 'Built-in Playwright — navigate, click, type, screenshot, fill forms, and run JavaScript. Persistent sessions.' },
@@ -405,6 +420,11 @@ const i18n = {
     'arch.title': '作为 Harness 构建，<br>而非工作流引擎。',
     'arch.sub': 'Harness 提供能力——工具、记忆、持久化、UI——不约束模型工作流。模型拥有最终决策权。',
     'footer.built': '基于 Electron + React 构建',
+    install: [
+      { icon: '<path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/><path d="M12 22V12M2 7l10 5 10-5"/>', name: 'macOS', file: '.dmg', note: '如提示"已损坏"，终端运行：xattr -cr /Applications/Verdant.app' },
+      { icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>', name: 'Windows', file: '.exe', note: 'SmartScreen 警告时点"更多信息" → "仍要运行"' },
+      { icon: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a14 14 0 0 1 0 20M12 2a14 14 0 0 0 0 20"/>', name: 'Linux', file: '.AppImage', note: '运行 chmod +x Verdant-*.AppImage && ./Verdant-*.AppImage' }
+    ],
     features: [
       { icon: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/>', title: '多智能体协作', desc: '通过 task 工具将任务委派给并行子智能体。每个子智能体拥有独立循环和完整工具访问。' },
       { icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>', title: '浏览器自动化', desc: '内置 Playwright——导航、点击、输入、截图、填表、执行 JS。会话持久化。' },
@@ -451,6 +471,7 @@ function setLang(lang) {
   
   renderFeatures(t);
   renderArch(t);
+  renderInstall(t);
 }
 
 function renderFeatures(t) {
@@ -464,8 +485,18 @@ function renderFeatures(t) {
   `).join('');
 }
 
+function renderInstall(t) {
+  const cards = document.getElementById('install-cards');
+  cards.innerHTML = `<div class="feature-grid">${t.install.map(p => `
+    <div class="feature-card">
+      <div class="feature-icon-wrap"><svg viewBox="0 0 24 24">${p.icon}</svg></div>
+      <h3>${p.name} <span style="color:var(--text-dim);font-weight:400;font-size:13px;">${p.file}</span></h3>
+      <p style="margin-top:8px;font-family:'SF Mono',monospace;font-size:12px;color:var(--text-muted);background:var(--surface-2);padding:8px 12px;border-radius:6px;border:1px solid var(--border);">${p.note}</p>
+    </div>
+  `).join('')}</div>`;
+}
+
 function renderArch(t) {
-  const diag = document.getElementById('arch-diagram');
   const r = t.arch.cards.slice(0, 3);
   const m = t.arch.cards.slice(3);
   diag.innerHTML = `

@@ -67,6 +67,20 @@
 
 ## 快速开始
 
+### 下载预编译版本
+
+从 [GitHub Releases](https://github.com/ljp-lachouchou/verdant/releases/latest) 下载最新版本。
+
+**安装提示：**
+
+| 平台 | 文件 | 说明 |
+|------|------|------|
+| macOS | `.dmg` | 如提示"已损坏"，终端运行：`xattr -cr /Applications/Verdant.app` |
+| Windows | `.exe` | SmartScreen 警告时点"更多信息" → "仍要运行" |
+| Linux | `.AppImage` | 运行 `chmod +x Verdant-*.AppImage && ./Verdant-*.AppImage` |
+
+### 从源码构建
+
 ```bash
 # 安装依赖
 npm install
