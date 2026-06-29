@@ -30,7 +30,8 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showVibe, setShowVibe] = useState(false)
   const [vibe, setVibe] = useState<VibeCodingConfig>({
-    enabled: false, cliPath: '', argsTemplate: '{prompt}', workingDir: '', timeout: 120000
+    enabled: false, cliPath: '', argsTemplate: '{prompt}', workingDir: '', timeout: 120000,
+    verifyType: 'none', verifyUrl: '', verifyCommand: ''
   })
   const [selectedPreset, setSelectedPreset] = useState('')
 
@@ -169,6 +170,49 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
                       placeholder="120000"
                     />
                   </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Verification</label>
+                    <select
+                      className="form-input"
+                      value={vibe.verifyType || 'none'}
+                      onChange={(e) => setVibe(prev => ({ ...prev, verifyType: e.target.value as any }))}
+                    >
+                      <option value="none">None</option>
+                      <option value="screenshot">Screenshot (frontend/client)</option>
+                      <option value="test">Test (backend)</option>
+                      <option value="both">Both screenshot + test</option>
+                    </select>
+                    <p className="form-hint">Automatically verify results after CLI tool completes.</p>
+                  </div>
+
+                  {(vibe.verifyType === 'screenshot' || vibe.verifyType === 'both') && (
+                    <div className="form-group">
+                      <label className="form-label">Verify URL (for screenshot)</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={vibe.verifyUrl || ''}
+                        onChange={(e) => setVibe(prev => ({ ...prev, verifyUrl: e.target.value }))}
+                        placeholder="http://localhost:3000"
+                      />
+                      <p className="form-hint">The app URL to screenshot after coding is done.</p>
+                    </div>
+                  )}
+
+                  {(vibe.verifyType === 'test' || vibe.verifyType === 'both') && (
+                    <div className="form-group">
+                      <label className="form-label">Test Command</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={vibe.verifyCommand || ''}
+                        onChange={(e) => setVibe(prev => ({ ...prev, verifyCommand: e.target.value }))}
+                        placeholder="npm test"
+                      />
+                      <p className="form-hint">Command to run tests. e.g. npm test, pytest, go test</p>
+                    </div>
+                  )}
                 </>
               )}
             </div>

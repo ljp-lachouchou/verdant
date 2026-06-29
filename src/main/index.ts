@@ -11,7 +11,7 @@ import { OpenAILLMProvider } from '@agent/llm-provider'
 import { StubLLMProvider } from '@agent/stub-provider'
 import { DEFAULT_CONFIG, type LLMProvider } from '@agent/types'
 import { HARNESS_SYSTEM_PROMPT } from '@agent/prompts'
-import { createMultiAgentToolRegistry, createFullToolRegistry, TaskTool, AskUserTool, SkillLoader } from '@tools/registry'
+import { createMultiAgentToolRegistry, createFullToolRegistry, TaskTool, AskUserTool, SkillLoader, SkillPermission } from '@tools/registry'
 import { ShellTool } from '@tools/shell'
 import {
   DatabaseManager,
@@ -139,9 +139,50 @@ function persistMessageAtomic(message: Message, sessionId?: string): void {
   if (!sid) return
   if (messageRepo.exists(message.id)) return
 
+  // Auto-generate blocks for messages with toolCalls (so UI can reconstruct on reload)
+  let blocks = message.blocks
+  if (!blocks && message.toolCalls && message.toolCalls.length > 0) {
+    blocks = []
+    if (message.content) {
+      blocks.push({ type: 'text', text: message.content })
+    }
+    for (const tc of message.toolCalls) {
+      blocks.push({
+        type: 'tool_call',
+        toolName: tc.toolName,
+        command: (tc.args?.command as string) || (tc.args?.path as string) || '',
+        output: tc.output,
+        status: tc.status === 'error' ? 'error' : 'success'
+      })
+      // Skill block
+      if (tc.toolName === 'skill' && tc.output && tc.status !== 'error') {
+        const nameMatch = tc.output.match(/name="([^"]+)"/)
+        const skillName = nameMatch?.[1] || 'unknown'
+        const descMatch = tc.output.match(/#\s+[^\n]+\n+([\s\S]*?)(?:\n##\s|$)/)
+        blocks.push({
+          type: 'skill',
+          skillName,
+          skillDescription: descMatch?.[1]?.trim() || tc.output.substring(0, 200)
+        })
+      }
+      // Sub-agent block (task tool)
+      if (tc.toolName === 'task') {
+        const desc = (tc.args?.description as string) || 'Sub-Agent'
+        blocks.push({
+          type: 'subagent',
+          subAgentName: desc,
+          subAgentId: tc.id,
+          subAgentStatus: tc.status === 'error' ? 'error' : 'success',
+          subAgentResult: tc.output
+        })
+      }
+    }
+  }
+
   const metadata = {
     ...message.metadata,
-    ...(message.reasoningContent ? { reasoningContent: message.reasoningContent } : {})
+    ...(message.reasoningContent ? { reasoningContent: message.reasoningContent } : {}),
+    ...(blocks ? { blocks } : {})
   }
 
   messageRepo.add({
@@ -225,11 +266,13 @@ function registerIpcHandlers(): void {
 
     llmProvider = createLLMProvider()
 
-    // Load skills
-    const skillLoader = new SkillLoader()
+    // Load skills with permission config
+    const skillPermission = new SkillPermission(currentConfig.skillPermissions || { '*': 'allow' })
+    const skillLoader = new SkillLoader(skillPermission)
     skillLoader.loadAll(process.cwd())
     globalSkillLoader = skillLoader
     const skillsText = skillLoader.getSkillListText()
+    console.log(`[Agent] skills in system prompt: ${skillsText.length > 0 ? 'YES' : 'NO'} (${skillsText.length} chars)`)
     const systemPrompt = HARNESS_SYSTEM_PROMPT + skillsText
 
     const agentCallbacks = {
@@ -292,7 +335,26 @@ function registerIpcHandlers(): void {
         send(event as unknown as Record<string, unknown>)
       },
       beforeToolCall: (ctx: { toolName: string; args: Record<string, unknown>; sessionId: string }) => {
+        const cmd = (ctx.args?.command as string) || ''
         const path = (ctx.args?.path as string) || ''
+
+        // === File deletion protection ===
+        // Detect rm commands in bash
+        if (ctx.toolName === 'bash' && cmd) {
+          const rmMatch = cmd.match(/\brm\b/)
+          if (rmMatch) {
+            // Allow rm in /tmp/ (intermediate file cleanup)
+            if (!cmd.includes('/tmp/') && !cmd.includes('/var/tmp/')) {
+              console.log(`[Agent] blocking delete command for user confirmation: ${cmd.substring(0, 80)}`)
+              return {
+                block: true,
+                reason: `This command will delete files: "${cmd.substring(0, 100)}". Use ask_user to confirm with the user before retrying this command.`
+              }
+            }
+          }
+        }
+
+        // === Temp file tracking ===
         if (path) {
           if (path.startsWith('/tmp/') || path.startsWith('/var/tmp/')) {
             if (ctx.toolName === 'write') {
@@ -307,7 +369,6 @@ function registerIpcHandlers(): void {
             }
           }
         }
-        const cmd = (ctx.args?.command as string) || ''
         if (cmd && (cmd.includes('/tmp/') || cmd.includes('/var/tmp/'))) {
           if (cmd.includes('>') || cmd.includes('cat >') || cmd.includes('tee ')) {
             const match = cmd.match(/(?:>|tee\s+)(['"]?)(\/tmp\/[^\s'"]+|\/var\/tmp\/[^\s'"]+)\1/)
@@ -336,17 +397,17 @@ function registerIpcHandlers(): void {
       baseConfig: { ...currentConfig, systemPrompt: HARNESS_SYSTEM_PROMPT },
       toolFactory: () => createFullToolRegistry(),
       parentCallbacks: agentCallbacks,
-      parentSessionId: activeSessionId
+      parentSessionId: activeSessionId,
+      skillLoader
     }
-    const vibeConfig = currentConfig.vibeCoding || { enabled: false, cliPath: '', argsTemplate: '{prompt}', workingDir: '', timeout: 120000 }
+    const vibeConfig = currentConfig.vibeCoding || { enabled: false, cliPath: '', argsTemplate: '{prompt}', workingDir: '', timeout: 120000, verifyType: 'none', verifyUrl: '', verifyCommand: '' }
     const toolRegistry = createMultiAgentToolRegistry(taskToolConfig, vibeConfig, skillLoader)
     activeTaskTool = toolRegistry.get('task') as TaskTool | null
 
     // Set up ask_user tool callback — wait for user confirmation via IPC
     const askUserTool = toolRegistry.get('ask_user') as AskUserTool | null
     if (askUserTool) {
-      askUserTool.setWaitCallback(async (message: string, screenshot?: string) => {
-        // If screenshot is a file path, read it and convert to base64
+      askUserTool.setWaitCallback(async (message: string, screenshot: string | undefined, options: Array<{ label: string; value: string }>) => {
         let imageBase64 = ''
         if (screenshot && screenshot.startsWith('/')) {
           try {
@@ -359,12 +420,12 @@ function registerIpcHandlers(): void {
         } else if (screenshot && screenshot.startsWith('data:')) {
           imageBase64 = screenshot
         }
-        send({ type: 'wait_user', message, text: imageBase64 })
-        return new Promise<void>((resolve) => {
-          const handler = (_event: unknown, data: { action: string }) => {
-            if (data.action === 'continue') {
+        send({ type: 'wait_user', message, text: imageBase64, options })
+        return new Promise<string>((resolve) => {
+          const handler = (_event: unknown, data: { action: string; response?: string }) => {
+            if (data.action === 'continue' || data.action === 'respond') {
               ipcMain.removeHandler('browser:continue')
-              resolve()
+              resolve(data.response || 'User confirmed.')
             }
           }
           ipcMain.handleOnce('browser:continue', handler as any)
@@ -471,6 +532,16 @@ function registerIpcHandlers(): void {
       dbManager, messageRepo, sessionRepo, llmProvider, currentConfig
     )
     return currentConfig
+  })
+
+  ipcMain.handle('skills:list', async () => {
+    const loader = new SkillLoader(new SkillPermission(currentConfig.skillPermissions || { '*': 'allow' }))
+    loader.loadAll(process.cwd())
+    return loader.getAllSkills().map(s => ({
+      name: s.name,
+      description: s.description,
+      location: s.location
+    }))
   })
 }
 

@@ -29,6 +29,9 @@ const api = {
   setConfig: (config: Partial<AgentConfig>): Promise<AgentConfig> =>
     ipcRenderer.invoke('config:set', config),
 
+  listSkills: (): Promise<Array<{ name: string; description: string; location: string }>> =>
+    ipcRenderer.invoke('skills:list'),
+
   onAgentStream: (callback: (event: AgentStreamEvent) => void) => {
     const handler = (_event: unknown, data: AgentStreamEvent) => callback(data)
     ipcRenderer.on('agent:stream', handler)
@@ -79,8 +82,8 @@ const api = {
     return () => {}
   },
 
-  browserContinue: (): Promise<void> =>
-    ipcRenderer.invoke('browser:continue', { action: 'continue' })
+  browserContinue: (response?: string): Promise<void> =>
+    ipcRenderer.invoke('browser:continue', { action: response ? 'respond' : 'continue', response })
 }
 
 export type AgentAPI = typeof api

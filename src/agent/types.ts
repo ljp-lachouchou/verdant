@@ -83,7 +83,7 @@ export const DEFAULT_CONFIG: AgentConfig = {
   maxContextTokens: 128000,
   compactionThreshold: 100000,
   compactionKeepTokens: 30000,
-  shellTimeout: 30000,
+  shellTimeout: 60000,
   maxOutputLength: 100000,
   apiBaseUrl: 'https://api.deepseek.com',
   apiKey: ''

@@ -2,12 +2,16 @@ import type { Tool, ToolResult, ToolContext, ToolUpdateCallback } from './types'
 import type { AgentConfig, AgentEvent } from '@shared/types'
 import type { LLMProvider, AgentLoopCallbacks } from '@agent/types'
 import { AgentLoop } from '@agent/loop'
+import { createFullToolRegistry } from './registry'
+import { SkillTool, SkillLoader } from './skill-tool'
 import { randomUUID } from 'crypto'
 
 const SUBAGENT_PROMPT = `You are a specialized sub-agent. You have been assigned a specific task by the parent agent.
-Focus exclusively on your assigned task. Use available tools (bash, read, write, edit, ls) to complete it.
+Focus exclusively on your assigned task. Use available tools to complete it.
 Provide a clear, complete result at the end.
-Write any intermediate files to /tmp/ only.`
+Write any intermediate files to /tmp/ only.
+
+If a skill is available and relevant to your task, load it first using the skill tool, then follow its instructions.`
 
 export interface TaskToolConfig {
   llmProvider: LLMProvider
@@ -15,12 +19,13 @@ export interface TaskToolConfig {
   toolFactory: () => Map<string, Tool>
   parentCallbacks: AgentLoopCallbacks
   parentSessionId: string
+  skillLoader?: SkillLoader
 }
 
 export class TaskTool implements Tool {
   definition = {
     name: 'task',
-    description: 'Delegate a sub-task to a sub-agent. The sub-agent runs its own agent loop with full tool access. Use this to parallelize work or delegate complex sub-tasks. The sub-agent cannot call task tool (no infinite recursion).',
+    description: 'Delegate a sub-task to a sub-agent. The sub-agent runs its own agent loop with full tool access including skills. Use this to parallelize work or delegate complex sub-tasks. The sub-agent cannot call task tool (no infinite recursion) but CAN use all other tools: bash, read, write, edit, ls, browser, skill, ask_user, vibe_coding.',
     parameters: [
       {
         name: 'description',
@@ -63,7 +68,6 @@ export class TaskTool implements Tool {
     const subAgentId = `subagent_${randomUUID().slice(0, 8)}`
     console.log(`[TaskTool] delegating to sub-agent ${subAgentId}: ${description}`)
 
-    // Emit register event
     this.emitEvent({
       type: 'subagent_register',
       sessionId: this.config.parentSessionId,
@@ -75,20 +79,27 @@ export class TaskTool implements Tool {
 
     onUpdate?.({ output: `Sub-agent "${description}" started...` })
 
-    // Build sub-agent config
+    // Build sub-agent config with skill list in system prompt
+    const skillLoader = this.config.skillLoader
+    const skillsText = skillLoader?.getSkillListText() || ''
     const subConfig: AgentConfig = {
       ...this.config.baseConfig,
-      systemPrompt: SUBAGENT_PROMPT,
+      systemPrompt: SUBAGENT_PROMPT + skillsText,
       maxIterations: Math.min(this.config.baseConfig.maxIterations, 25),
     }
 
-    // Build tool registry — exclude task tool (no recursion)
-    const tools = this.config.toolFactory()
+    // Build tool registry — include all tools EXCEPT task (no recursion)
+    const tools = createFullToolRegistry()
+
+    // Add skill tool if skills are available
+    if (skillLoader && skillLoader.getAllSkills().length > 0) {
+      tools.set('skill', new SkillTool(skillLoader))
+    }
+
     if (agentType === 'explore') {
-      // Read-only: only keep read, ls, grep, bash
       const readOnly = new Map()
       for (const [name, tool] of tools) {
-        if (['read', 'ls', 'bash', 'grep', 'glob'].includes(name)) {
+        if (['read', 'ls', 'bash', 'skill'].includes(name)) {
           readOnly.set(name, tool)
         }
       }
@@ -98,9 +109,8 @@ export class TaskTool implements Tool {
       }
     }
 
-    // Build callbacks — forward tool events, suppress token streaming
     const subCallbacks: AgentLoopCallbacks = {
-      onToken: undefined,  // don't stream sub-agent tokens to UI
+      onToken: undefined,
       onTextChunk: undefined,
       onToolCall: (name, toolArgs) => {
         this.config.parentCallbacks.onToolCall?.(name, toolArgs)
@@ -112,11 +122,9 @@ export class TaskTool implements Tool {
       onError: (error) => {
         console.error(`[TaskTool] sub-agent ${subAgentId} error: ${error.message}`)
       },
-      onMessagePersist: (msg) => {
-        this.config.parentCallbacks.onMessagePersist?.({
-          ...msg,
-          metadata: { ...msg.metadata, subAgentId, subAgentName: description }
-        })
+      onMessagePersist: (_msg) => {
+        // Don't persist sub-agent messages to the main session DB
+        // They are ephemeral — only the task tool result is persisted by the parent
       },
       shouldStop: () => this.config.parentCallbacks.shouldStop?.() ?? false
     }

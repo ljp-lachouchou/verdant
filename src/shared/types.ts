@@ -2,7 +2,7 @@ export type MessageRole = 'system' | 'user' | 'assistant' | 'tool'
 
 export type MessageType = 'text' | 'tool_use' | 'tool_result' | 'summary' | 'steering' | 'notification'
 
-export type ContentBlockType = 'text' | 'tool_call' | 'image' | 'skill'
+export type ContentBlockType = 'text' | 'tool_call' | 'image' | 'skill' | 'subagent'
 
 export interface ContentBlock {
   type: ContentBlockType
@@ -15,6 +15,11 @@ export interface ContentBlock {
   imageAlt?: string
   skillName?: string
   skillDescription?: string
+  subAgentName?: string
+  subAgentId?: string
+  subAgentStatus?: 'running' | 'success' | 'error'
+  subAgentResult?: string
+  subAgentBlocks?: ContentBlock[]
 }
 
 export interface Message {
@@ -82,7 +87,10 @@ export interface AgentConfig {
   apiBaseUrl: string
   apiKey: string
   vibeCoding?: VibeCodingConfig
+  skillPermissions?: Record<string, 'allow' | 'deny' | 'ask'>
 }
+
+export type VerifyType = 'none' | 'screenshot' | 'test' | 'both'
 
 export interface VibeCodingConfig {
   enabled: boolean
@@ -90,6 +98,9 @@ export interface VibeCodingConfig {
   argsTemplate: string
   workingDir: string
   timeout: number
+  verifyType?: VerifyType
+  verifyUrl?: string
+  verifyCommand?: string
 }
 
 export const DEFAULT_VIBE_CODING_CONFIG: VibeCodingConfig = {
@@ -97,7 +108,10 @@ export const DEFAULT_VIBE_CODING_CONFIG: VibeCodingConfig = {
   cliPath: '',
   argsTemplate: '{prompt}',
   workingDir: '',
-  timeout: 120000
+  timeout: 120000,
+  verifyType: 'none',
+  verifyUrl: '',
+  verifyCommand: ''
 }
 
 export interface CompactionResult {
@@ -171,6 +185,7 @@ export interface AgentEvent {
   subAgentResult?: string
   planSteps?: Array<{ id: string; name: string; description: string; dependencies: string[] }>
   imageBase64?: string
+  options?: Array<{ label: string; value: string }>
 }
 
 export type AgentStreamEvent = AgentEvent

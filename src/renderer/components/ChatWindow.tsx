@@ -10,6 +10,9 @@ function StreamingBlock({ block }: { block: ContentBlock }) {
   if (block.type === 'skill') {
     return <StreamingSkillBlock block={block} />
   }
+  if (block.type === 'subagent') {
+    return <StreamingSubAgentBlock block={block} />
+  }
   if (block.type === 'text') {
     if (!block.text) return null
     return (
@@ -68,6 +71,110 @@ function StreamingSkillBlock({ block }: { block: ContentBlock }) {
       </div>
       {expanded && block.skillDescription && (
         <div className="skill-block-description">{block.skillDescription}</div>
+      )}
+    </div>
+  )
+}
+
+function StreamingSubAgentBlock({ block }: { block: ContentBlock }) {
+  const [expanded, setExpanded] = useState(false)
+  const status = block.subAgentStatus || 'running'
+
+  return (
+    <div className={`subagent-block ${status}`}>
+      <div className="subagent-block-header" onClick={() => setExpanded(!expanded)}>
+        <span className={`subagent-block-dot ${status}`} />
+        <span className="subagent-block-icon">🤖</span>
+        <span className="subagent-block-name">{block.subAgentName || 'Sub-Agent'}</span>
+        <span className="subagent-block-label">SUB-AGENT</span>
+        <span className={`subagent-block-status ${status}`}>{status}</span>
+        <span className="subagent-block-expand">
+          {expanded ? <ChevronDownIcon size={12} /> : <ChevronRightIcon size={12} />}
+        </span>
+      </div>
+      {expanded && block.subAgentResult && (
+        <div className="subagent-block-result">
+          <pre className="subagent-block-output"><code>{block.subAgentResult}</code></pre>
+        </div>
+      )}
+      {expanded && !block.subAgentResult && status === 'running' && (
+        <div className="subagent-block-result">
+          <div className="streaming-indicator">
+            <span className="streaming-indicator-dots">
+              <span></span><span></span><span></span>
+            </span>
+            <span className="streaming-indicator-text">Working...</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function WaitUserBanner({ message, screenshot, options, onRespond }: {
+  message: string
+  screenshot: string
+  options?: Array<{ label: string; value: string }>
+  onRespond: (response?: string) => void
+}) {
+  const [showCustom, setShowCustom] = useState(false)
+  const [customInput, setCustomInput] = useState('')
+
+  const hasOptions = options && options.length > 0
+
+  return (
+    <div className="wait-user-banner">
+      <div className="wait-user-message">{message}</div>
+      {screenshot && (
+        <img className="wait-user-screenshot" src={screenshot} alt="Browser screenshot" />
+      )}
+      {hasOptions && (
+        <div className="wait-user-options">
+          {options!.map((opt, i) => (
+            <button
+              key={i}
+              className="wait-user-option-btn"
+              onClick={() => onRespond(opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
+          <button
+            className="wait-user-option-btn wait-user-custom-btn"
+            onClick={() => setShowCustom(!showCustom)}
+          >
+            Custom
+          </button>
+        </div>
+      )}
+      {showCustom && (
+        <div className="wait-user-custom-input">
+          <input
+            type="text"
+            className="form-input"
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            placeholder="Type your response..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && customInput.trim()) {
+                onRespond(customInput.trim())
+              }
+            }}
+            autoFocus
+          />
+          <button
+            className="btn-primary"
+            onClick={() => onRespond(customInput.trim() || undefined)}
+            disabled={!customInput.trim()}
+          >
+            Send
+          </button>
+        </div>
+      )}
+      {!hasOptions && (
+        <button className="btn-primary wait-user-btn" onClick={() => onRespond(undefined)}>
+          Continue
+        </button>
       )}
     </div>
   )
@@ -152,15 +259,12 @@ export default function ChatWindow() {
       )}
 
       {waitUser && (
-        <div className="wait-user-banner">
-          <div className="wait-user-message">{waitUser.message}</div>
-          {waitUser.screenshot && (
-            <img className="wait-user-screenshot" src={waitUser.screenshot} alt="Browser screenshot" />
-          )}
-          <button className="btn-primary wait-user-btn" onClick={() => dispatch(continueAfterWait())}>
-            Continue
-          </button>
-        </div>
+        <WaitUserBanner
+          message={waitUser.message}
+          screenshot={waitUser.screenshot}
+          options={waitUser.options}
+          onRespond={(response) => dispatch(continueAfterWait(response))}
+        />
       )}
 
       {error && (

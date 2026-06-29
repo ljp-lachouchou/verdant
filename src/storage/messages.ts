@@ -140,6 +140,7 @@ export class MessageRepository {
   private mapRow(row: MessageRow): Message {
     const metadata = row.metadata ? JSON.parse(row.metadata) : undefined
     const reasoningContent = metadata?.reasoningContent as string | undefined
+    const blocks = metadata?.blocks as import('@shared/types').ContentBlock[] | undefined
 
     return {
       id: row.id,
@@ -149,6 +150,7 @@ export class MessageRepository {
       content: row.content,
       timestamp: row.timestamp,
       toolCalls: row.tool_calls ? JSON.parse(row.tool_calls) : undefined,
+      blocks,
       isSummary: row.is_summary === 1,
       isCompacted: row.is_compacted === 1,
       parentMessageId: row.parent_message_id || undefined,

@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { createSession, deleteSession, setActiveSession } from '../store/chatSlice'
 import { toggleSidebar, toggleTheme, setShowSettings } from '../store/settingsSlice'
 import { LogoIcon, MenuIcon, PlusIcon, SettingsIcon, SunIcon, MoonIcon, TrashIcon } from './Icons'
+import SkillsModal from './SkillsModal'
 
 export default function Sidebar() {
   const dispatch = useAppDispatch()
@@ -9,6 +11,7 @@ export default function Sidebar() {
   const activeSessionId = useAppSelector((s) => s.chat.activeSessionId)
   const collapsed = useAppSelector((s) => s.settings.sidebarCollapsed)
   const theme = useAppSelector((s) => s.settings.theme)
+  const [showSkills, setShowSkills] = useState(false)
 
   if (collapsed) {
     return (
@@ -71,6 +74,10 @@ export default function Sidebar() {
       </div>
 
       <div className="sidebar-footer">
+        <button className="footer-btn" onClick={() => setShowSkills(true)}>
+          <span style={{ fontSize: '12px' }}>⚡</span>
+          Skills
+        </button>
         <button className="footer-btn" onClick={() => dispatch(toggleTheme())}>
           {theme === 'dark' ? <MoonIcon size={14} /> : <SunIcon size={14} />}
           {theme === 'dark' ? 'Dark' : 'Light'}
@@ -80,6 +87,8 @@ export default function Sidebar() {
           Settings
         </button>
       </div>
+
+      <SkillsModal open={showSkills} onClose={() => setShowSkills(false)} />
     </aside>
   )
 }

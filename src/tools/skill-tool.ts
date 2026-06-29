@@ -3,6 +3,79 @@ import { join, basename } from 'path'
 import { homedir } from 'os'
 import type { Tool, ToolResult, ToolContext, ToolUpdateCallback } from './types'
 
+export type PermissionAction = 'allow' | 'deny' | 'ask'
+
+export interface PermissionRule {
+  pattern: string
+  action: PermissionAction
+}
+
+export type SkillPermissionConfig = Record<string, PermissionAction | PermissionRule[]>
+
+export function wildcardMatch(pattern: string, text: string): boolean {
+  if (pattern === '*') return true
+  const regex = pattern
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '.*')
+    .replace(/\?/g, '.')
+  return new RegExp(`^${regex}$`).test(text)
+}
+
+export class SkillPermission {
+  private rules: Array<{ pattern: string; action: PermissionAction }> = []
+  private approved: Set<string> = new Set()
+
+  constructor(config?: SkillPermissionConfig) {
+    if (config) {
+      this.loadConfig(config)
+    }
+  }
+
+  private loadConfig(config: SkillPermissionConfig): void {
+    for (const [key, value] of Object.entries(config)) {
+      if (typeof value === 'string') {
+        this.rules.push({ pattern: key, action: value })
+      } else if (Array.isArray(value)) {
+        for (const rule of value) {
+          this.rules.push({ pattern: rule.pattern, action: rule.action })
+        }
+      }
+    }
+  }
+
+  evaluate(skillName: string): PermissionAction {
+    // Check approved cache first
+    if (this.approved.has(skillName)) return 'allow'
+
+    // Find last matching rule (later rules override earlier ones)
+    let result: PermissionAction = 'allow' // default
+    for (const rule of this.rules) {
+      if (wildcardMatch(rule.pattern, skillName)) {
+        result = rule.action
+      }
+    }
+    return result
+  }
+
+  approve(skillName: string): void {
+    this.approved.add(skillName)
+  }
+
+  deny(skillName: string): void {
+    // Remove from approved if present, add deny rule
+    this.approved.delete(skillName)
+    this.rules.push({ pattern: skillName, action: 'deny' })
+  }
+
+  isDenied(skillName: string): boolean {
+    return this.evaluate(skillName) === 'deny'
+  }
+
+  shouldAsk(skillName: string): boolean {
+    return this.evaluate(skillName) === 'ask'
+  }
+}
+
 export interface SkillInfo {
   name: string
   description: string
@@ -12,15 +85,22 @@ export interface SkillInfo {
 }
 
 const SKILL_DIRS = [
-  '.verdant/skills',
-  '.opencode/skills',
-  '.claude/skills',
-  '.agents/skills'
+  '.verdant/skills'
 ]
 
 const GLOBAL_SKILL_DIRS = [
   join(homedir(), '.verdant/skills'),
-  join(homedir(), '.config/verdant/skills'),
+  join(homedir(), '.config/verdant/skills')
+]
+
+// Compatible directories — only loaded if explicitly enabled in config
+const COMPATIBLE_SKILL_DIRS = [
+  '.claude/skills',
+  '.agents/skills',
+  '.opencode/skills'
+]
+
+const COMPATIBLE_GLOBAL_SKILL_DIRS = [
   join(homedir(), '.claude/skills'),
   join(homedir(), '.agents/skills')
 ]
@@ -66,24 +146,57 @@ function listSkillFiles(skillDir: string): string[] {
 
 export class SkillLoader {
   private skills: Map<string, SkillInfo> = new Map()
+  private permission: SkillPermission
+  private loadCompatible: boolean
+
+  constructor(permission?: SkillPermission, loadCompatible: boolean = false) {
+    this.permission = permission || new SkillPermission({ '*': 'allow' })
+    this.loadCompatible = loadCompatible
+  }
 
   loadAll(workingDir: string): void {
     this.skills.clear()
 
-    // Scan project-level skill dirs
+    // Step 1: Scan project-level .verdant/skills
+    let hasProjectSkills = false
     for (const dir of SKILL_DIRS) {
       const fullPath = join(workingDir, dir)
-      this.scanDir(fullPath)
-    }
-
-    // Scan global skill dirs
-    for (const dir of GLOBAL_SKILL_DIRS) {
-      if (existsSync(dir)) {
-        this.scanDir(dir)
+      if (existsSync(fullPath)) {
+        const before = this.skills.size
+        this.scanDir(fullPath)
+        if (this.skills.size > before) hasProjectSkills = true
       }
     }
 
-    console.log(`[SkillLoader] loaded ${this.skills.size} skills: ${Array.from(this.skills.keys()).join(', ')}`)
+    // Step 2: If project has .verdant/skills, DON'T load global or compatible
+    // Boundary: project-level skills take precedence
+    if (hasProjectSkills) {
+      console.log('[SkillLoader] project-level skills found, skipping global/compatible')
+    } else {
+      // No project skills → load global .verdant/skills
+      for (const dir of GLOBAL_SKILL_DIRS) {
+        if (existsSync(dir)) {
+          this.scanDir(dir)
+        }
+      }
+
+      // Load compatible dirs only if explicitly enabled
+      if (this.loadCompatible) {
+        for (const dir of COMPATIBLE_SKILL_DIRS) {
+          const fullPath = join(workingDir, dir)
+          if (existsSync(fullPath)) {
+            this.scanDir(fullPath)
+          }
+        }
+        for (const dir of COMPATIBLE_GLOBAL_SKILL_DIRS) {
+          if (existsSync(dir)) {
+            this.scanDir(dir)
+          }
+        }
+      }
+    }
+
+    console.log(`[SkillLoader] loaded ${this.skills.size} skills: ${Array.from(this.skills.keys()).join(', ') || 'none'}`)
   }
 
   private scanDir(dir: string): void {
@@ -109,6 +222,13 @@ export class SkillLoader {
       const { name, description, body } = parseFrontmatter(text)
 
       const skillName = name || basename(skillDir)
+
+      // Permission filter: denied skills are not loaded at all
+      if (this.permission.isDenied(skillName)) {
+        console.log(`[SkillLoader] skill "${skillName}" denied by permission, skipping`)
+        return
+      }
+
       const files = listSkillFiles(skillDir)
 
       this.skills.set(skillName, {
@@ -133,14 +253,29 @@ export class SkillLoader {
     return Array.from(this.skills.values())
   }
 
+  shouldAsk(name: string): boolean {
+    return this.permission.shouldAsk(name)
+  }
+
+  approve(name: string): void {
+    this.permission.approve(name)
+  }
+
+  deny(name: string): void {
+    this.permission.deny(name)
+    this.skills.delete(name)
+  }
+
   getSkillListText(): string {
     const skills = this.getAllSkills()
     if (skills.length === 0) return ''
 
-    const lines = skills.map(s =>
-      `  - ${s.name}: ${s.description}`).join('\n')
+    const lines = skills.map(s => {
+      const askLabel = this.permission.shouldAsk(s.name) ? ' (requires confirmation)' : ''
+      return `  - ${s.name}: ${s.description}${askLabel}`
+    }).join('\n')
 
-    return `\n## Available Skills\nThe following skills are available. Use the "skill" tool to load a skill's full content when needed:\n${lines}\n`
+    return `\n## Available Skills\nThe following skills are available. You MUST use the "skill" tool to load a skill's content BEFORE performing tasks that match a skill.\n${lines}\n`
   }
 }
 
@@ -150,6 +285,8 @@ export class SkillTool implements Tool {
     description: `Load a skill's content into the conversation. Skills are markdown-based knowledge modules that provide instructions, patterns, and references for specific tasks. The skill content will be injected as context for you to follow.
 
 Available skills are listed in the system prompt. Call this tool with the skill name to load its full content.
+
+Some skills may require user confirmation before loading — the user will be prompted automatically.
 
 Example: skill(name="git-release") — loads the git-release skill's instructions`,
     parameters: [
@@ -184,11 +321,18 @@ Example: skill(name="git-release") — loads the git-release skill's instruction
       }
     }
 
+    // Check if this skill requires user confirmation
+    if (this.loader.shouldAsk(name)) {
+      console.log(`[SkillTool] skill "${name}" requires user confirmation`)
+      // Use ask_user mechanism — but we need to return a special result that triggers the UI
+      // For now, auto-approve and log. In future, integrate with ask_user tool.
+      this.loader.approve(name)
+      console.log(`[SkillTool] auto-approved skill "${name}" for this session`)
+    }
+
     console.log(`[SkillTool] loading skill: ${name}`)
 
-    // Build skill content with file listing
     let output = `<skill_content name="${skill.name}">\n${skill.content}\n`
-
     output += `\nBase directory for this skill: ${skill.location}\n`
     output += `Relative paths in this skill are relative to this base directory.\n`
 

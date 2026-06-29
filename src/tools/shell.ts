@@ -1,7 +1,30 @@
 import { spawn, ChildProcess } from 'child_process'
 import { platform } from 'os'
+import { accessSync, constants } from 'fs'
 import type { Tool, ToolResult, ToolContext, ToolUpdateCallback } from './types'
 import { randomUUID } from 'crypto'
+
+let resolvedShell: string | null = null
+
+function getShellPath(): string {
+  if (resolvedShell) return resolvedShell
+  if (platform() === 'win32') {
+    resolvedShell = process.env.COMSPEC || 'cmd.exe'
+    return resolvedShell
+  }
+  const candidates = ['/bin/bash', '/usr/bin/bash', '/usr/local/bin/bash', '/bin/sh']
+  for (const c of candidates) {
+    try {
+      accessSync(c, constants.X_OK)
+      resolvedShell = c
+      return resolvedShell
+    } catch {
+      // try next
+    }
+  }
+  resolvedShell = process.env.SHELL || '/bin/sh'
+  return resolvedShell
+}
 
 export class ShellTool implements Tool {
   private activeProcesses = new Map<string, ChildProcess>()
@@ -32,12 +55,21 @@ export class ShellTool implements Tool {
   }
 
   async execute(args: Record<string, unknown>, context: ToolContext, onUpdate?: ToolUpdateCallback): Promise<ToolResult> {
-    const command = args.command as string
+    let command = args.command as string
     const cwd = (args.cwd as string) || context.workingDirectory
     const timeout = (args.timeout as number) || context.timeout
 
     if (!command) {
       return { output: 'Error: No command provided', isError: true }
+    }
+
+    // Detect background commands (ending with &) and ensure they produce output
+    // Also redirect background process output to file to prevent pipe staying open
+    const isBackground = /&\s*$/.test(command.trim())
+    if (isBackground && !command.includes('echo')) {
+      const logFile = `/tmp/agent_bg_${Date.now()}.log`
+      // Wrap: redirect bg process output to file, then echo completion
+      command = `{ ${command.trim().replace(/&\s*$/, '')} > ${logFile} 2>&1 & } && echo "Background process started, PID: $!, log: ${logFile}"`
     }
 
     const blockedCommands = ['rm -rf /', 'mkfs', 'dd if=', ':(){:|:&};:', 'shutdown', 'reboot']
@@ -49,7 +81,7 @@ export class ShellTool implements Tool {
     }
 
     const isWindows = platform() === 'win32'
-    const shell = isWindows ? 'cmd.exe' : 'bash'
+    const shell = getShellPath()
     const shellArgs = isWindows ? ['/c', command] : ['-c', command]
 
     return new Promise<ToolResult>((resolve) => {
@@ -158,7 +190,7 @@ export class PTYTool implements Tool {
     try {
       const nodePty = await import('node-pty')
       const isWindows = platform() === 'win32'
-      const shell = isWindows ? 'powershell.exe' : 'bash'
+      const shell = isWindows ? (process.env.COMSPEC || 'powershell.exe') : getShellPath()
       const shellArgs = isWindows ? [] : ['-c', command]
 
       return new Promise<ToolResult>((resolve) => {

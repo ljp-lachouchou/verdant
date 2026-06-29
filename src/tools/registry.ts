@@ -5,7 +5,7 @@ import { TaskTool } from './task-tool'
 import { VibeCodingTool } from './vibe-coding-tool'
 import { BrowserTool } from './browser-tool'
 import { AskUserTool } from './ask-user-tool'
-import { SkillLoader, SkillTool } from './skill-tool'
+import { SkillLoader, SkillTool, SkillPermission } from './skill-tool'
 import type { TaskToolConfig } from './task-tool'
 import type { VibeCodingConfig } from '@shared/types'
 
@@ -47,6 +47,6 @@ export function createMultiAgentToolRegistry(taskToolConfig: TaskToolConfig, vib
   return registry
 }
 
-export { ShellTool, PTYTool, FileReadTool, FileWriteTool, FileEditTool, ListDirectoryTool, TaskTool, VibeCodingTool, BrowserTool, AskUserTool, SkillLoader, SkillTool }
+export { ShellTool, PTYTool, FileReadTool, FileWriteTool, FileEditTool, ListDirectoryTool, TaskTool, VibeCodingTool, BrowserTool, AskUserTool, SkillLoader, SkillTool, SkillPermission }
 export type { Tool, ToolResult, ToolContext, ToolDefinition, ToolParameter } from './types'
 export type { TaskToolConfig } from './task-tool'

@@ -13,3 +13,5 @@ coverage/
 *.db-shm
 $PATH
 stories.json
+login-page.html
+login.html

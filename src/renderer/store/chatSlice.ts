@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 import type { Message, Session, AgentStreamEvent, ContentBlock } from '@shared/types'
 import { setAgentStatus, startTool, finishTool, clearTools, clearSubAgents, clearPlan, setPlanSteps, registerSubAgent, updateSubAgent } from './statusSlice'
+import { BlockSerializer } from '../utils/blockSerializer'
 
 export interface ChatState {
   sessions: Session[]
@@ -13,7 +14,7 @@ export interface ChatState {
   error: string | null
   needsConfig: boolean
   stopped: boolean
-  waitUser: { message: string; screenshot: string } | null
+  waitUser: { message: string; screenshot: string; options?: Array<{ label: string; value: string }> } | null
 }
 
 const initialState: ChatState = {
@@ -112,15 +113,16 @@ export const sendAgentMessage = createAsyncThunk(
         requestSessionId = session.id
         dispatch(chatSlice.actions.updateActiveSession(session.id))
         dispatch(chatSlice.actions.setStreamingSession(session.id))
-        dispatch(initSessions())
+        // Insert new session into list without full reload
+        dispatch(chatSlice.actions.insertSession(session))
       })
     } else {
       dispatch(chatSlice.actions.setStreamingSession(requestSessionId))
     }
 
     // Listen for session title update (when first message renames session)
-    const sessionUpdatedUnsub = getAPI().onSessionUpdated?.((_session: { id: string; name: string }) => {
-      dispatch(initSessions())
+    const sessionUpdatedUnsub = getAPI().onSessionUpdated?.((session: { id: string; name: string }) => {
+      dispatch(chatSlice.actions.updateSessionName(session))
     })
 
     let streamDone = false
@@ -169,7 +171,8 @@ export const sendAgentMessage = createAsyncThunk(
       if (event.type === 'wait_user') {
         dispatch(chatSlice.actions.setWaitUser({
           message: event.message || 'Please check the browser and click Continue.',
-          screenshot: event.text || ''
+          screenshot: event.text || '',
+          options: event.options
         }))
       }
 
@@ -189,12 +192,23 @@ export const sendAgentMessage = createAsyncThunk(
           prompt: event.subAgentTask,
           startTime: Date.now()
         }))
+        // Also push a subagent block to streamingBlocks
+        dispatch(chatSlice.actions.addSubAgentBlock({
+          subAgentId: event.subAgentId,
+          subAgentName: event.subAgentName || 'Sub-Agent',
+          subAgentStatus: 'running'
+        }))
       }
       if (event.type === 'subagent_update' && event.subAgentId) {
         dispatch(updateSubAgent({
           id: event.subAgentId,
           status: (event.subAgentStatus as 'running' | 'success' | 'error') || 'error',
           endTime: event.subAgentStatus === 'error' || event.subAgentStatus === 'success' ? Date.now() : undefined
+        }))
+        // Update subagent block
+        dispatch(chatSlice.actions.updateSubAgentBlock({
+          subAgentId: event.subAgentId,
+          subAgentStatus: (event.subAgentStatus as 'running' | 'success' | 'error') || 'error'
         }))
       }
       if (event.type === 'subagent_complete' && event.subAgentId) {
@@ -204,6 +218,12 @@ export const sendAgentMessage = createAsyncThunk(
           endTime: Date.now(),
           result: event.subAgentResult
         } as any))
+        // Update subagent block with result
+        dispatch(chatSlice.actions.updateSubAgentBlock({
+          subAgentId: event.subAgentId,
+          subAgentStatus: 'success',
+          subAgentResult: event.subAgentResult
+        }))
       }
 
       dispatch(chatSlice.actions.handleStreamEvent(event))
@@ -259,8 +279,8 @@ export const steerAgent = createAsyncThunk('chat/steerAgent', async (message: st
 
 export const continueAfterWait = createAsyncThunk(
   'chat/continueAfterWait',
-  async (_, { dispatch }) => {
-    await getAPI().browserContinue?.()
+  async (response: string | undefined, { dispatch }) => {
+    await getAPI().browserContinue?.(response)
     dispatch(chatSlice.actions.setWaitUser(null))
   }
 )
@@ -380,9 +400,9 @@ const chatSlice = createSlice({
               if (event.name === 'skill' && !event.isError) {
                 const nameMatch = event.output?.match(/name="([^"]+)"/)
                 const skillName = nameMatch?.[1] || 'unknown'
-                // Extract description from first paragraph after title
-                const descMatch = event.output?.match(/^#\s+.*?\n\n([\s\S]*?)(?:\n\n|\n##)/)
-                const skillDesc = descMatch?.[1]?.trim() || ''
+                // Extract description: text between first # title and next ## section
+                const descMatch = event.output?.match(/#\s+[^\n]+\n+([\s\S]*?)(?:\n##\s|$)/)
+                const skillDesc = descMatch?.[1]?.trim() || event.output?.substring(0, 200) || ''
                 state.streamingBlocks.splice(i + 1, 0, {
                   type: 'skill',
                   skillName,
@@ -433,6 +453,18 @@ const chatSlice = createSlice({
     updateActiveSession: (state, action: PayloadAction<string>) => {
       state.activeSessionId = action.payload
     },
+    insertSession: (state, action: PayloadAction<Session>) => {
+      // Only insert if not already in list
+      if (!state.sessions.find(s => s.id === action.payload.id)) {
+        state.sessions.unshift(action.payload)
+      }
+    },
+    updateSessionName: (state, action: PayloadAction<{ id: string; name: string }>) => {
+      const session = state.sessions.find(s => s.id === action.payload.id)
+      if (session) {
+        session.name = action.payload.name
+      }
+    },
     setStreamingSession: (state, action: PayloadAction<string | null>) => {
       state.streamingSessionId = action.payload
       if (action.payload === null) {
@@ -448,8 +480,27 @@ const chatSlice = createSlice({
     setActiveRequestId: (state, action: PayloadAction<string | null>) => {
       state.activeRequestId = action.payload
     },
-    setWaitUser: (state, action: PayloadAction<{ message: string; screenshot: string } | null>) => {
+    setWaitUser: (state, action: PayloadAction<{ message: string; screenshot: string; options?: Array<{ label: string; value: string }> } | null>) => {
       state.waitUser = action.payload
+    },
+    addSubAgentBlock: (state, action: PayloadAction<{ subAgentId: string; subAgentName: string; subAgentStatus: 'running' | 'success' | 'error' }>) => {
+      state.streamingBlocks.push({
+        type: 'subagent',
+        subAgentId: action.payload.subAgentId,
+        subAgentName: action.payload.subAgentName,
+        subAgentStatus: action.payload.subAgentStatus
+      })
+    },
+    updateSubAgentBlock: (state, action: PayloadAction<{ subAgentId: string; subAgentStatus: 'running' | 'success' | 'error'; subAgentResult?: string }>) => {
+      for (const block of state.streamingBlocks) {
+        if (block.type === 'subagent' && block.subAgentId === action.payload.subAgentId) {
+          block.subAgentStatus = action.payload.subAgentStatus
+          if (action.payload.subAgentResult !== undefined) {
+            block.subAgentResult = action.payload.subAgentResult
+          }
+          break
+        }
+      }
     }
   },
   extraReducers: (builder) => {
@@ -471,26 +522,8 @@ const chatSlice = createSlice({
       })
       .addCase(loadSessionMessages.fulfilled, (state, action) => {
         state.activeSessionId = action.payload.sessionId
-        // Reconstruct blocks from toolCalls for each message
-        state.messages = action.payload.messages.map(msg => {
-          if (msg.toolCalls && msg.toolCalls.length > 0 && !msg.blocks) {
-            const blocks: ContentBlock[] = []
-            if (msg.content) {
-              blocks.push({ type: 'text', text: msg.content })
-            }
-            for (const tc of msg.toolCalls) {
-              blocks.push({
-                type: 'tool_call',
-                toolName: tc.toolName,
-                command: (tc.args?.command as string) || (tc.args?.path as string) || '',
-                output: tc.output,
-                status: tc.status === 'error' ? 'error' : 'success'
-              })
-            }
-            return { ...msg, blocks }
-          }
-          return msg
-        })
+        // Use BlockSerializer to reconstruct blocks for each message
+        state.messages = action.payload.messages.map(msg => BlockSerializer.mergeBlocks(msg))
         state.streamingBlocks = []
         state.error = null
       })
@@ -500,7 +533,7 @@ const chatSlice = createSlice({
 export const {
   addUserMessage, addAssistantMessage, commitStreamingBlocks,
   setNeedsConfig, setLoading, setError, clearStreaming, handleStreamEvent,
-  setActiveSession, updateActiveSession, setStreamingSession, markStopped, resetStopped,
-  setActiveRequestId, setWaitUser
+  setActiveSession, updateActiveSession, insertSession, updateSessionName, setStreamingSession, markStopped, resetStopped,
+  setActiveRequestId, setWaitUser, addSubAgentBlock, updateSubAgentBlock
 } = chatSlice.actions
 export default chatSlice.reducer

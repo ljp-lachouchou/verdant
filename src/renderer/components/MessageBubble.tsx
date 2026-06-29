@@ -113,6 +113,41 @@ function SkillBlock({ block }: { block: ContentBlock }) {
   )
 }
 
+function SubAgentBlock({ block }: { block: ContentBlock }) {
+  const [expanded, setExpanded] = useState(false)
+  const status = block.subAgentStatus || 'running'
+
+  return (
+    <div className={`subagent-block ${status}`}>
+      <div className="subagent-block-header" onClick={() => setExpanded(!expanded)}>
+        <span className={`subagent-block-dot ${status}`} />
+        <span className="subagent-block-icon">🤖</span>
+        <span className="subagent-block-name">{block.subAgentName || 'Sub-Agent'}</span>
+        <span className="subagent-block-label">SUB-AGENT</span>
+        <span className={`subagent-block-status ${status}`}>{status}</span>
+        <span className="subagent-block-expand">
+          {expanded ? <ChevronDownIcon size={12} /> : <ChevronRightIcon size={12} />}
+        </span>
+      </div>
+      {expanded && block.subAgentResult && (
+        <div className="subagent-block-result">
+          <pre className="subagent-block-output"><code>{block.subAgentResult}</code></pre>
+        </div>
+      )}
+      {expanded && !block.subAgentResult && status === 'running' && (
+        <div className="subagent-block-result">
+          <div className="streaming-indicator">
+            <span className="streaming-indicator-dots">
+              <span></span><span></span><span></span>
+            </span>
+            <span className="streaming-indicator-text">Working...</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function TextBlock({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
   if (!text) return null
   return (
@@ -158,6 +193,9 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
             }
             if (block.type === 'skill') {
               return <SkillBlock key={i} block={block} />
+            }
+            if (block.type === 'subagent') {
+              return <SubAgentBlock key={i} block={block} />
             }
             return <ToolBlock key={i} block={block} />
           })}

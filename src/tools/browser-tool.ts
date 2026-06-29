@@ -97,6 +97,13 @@ Examples:
         type: 'string' as const,
         description: 'CSS selector to wait for after action (optional)',
         required: false
+      },
+      {
+        name: 'device',
+        type: 'string' as const,
+        description: 'Device preset for viewport: "desktop" (1280x800, default), "mobile" (375x667, iPhone SE), "tablet" (768x1024, iPad), "iphone" (390x844, iPhone 12), or "WxH" custom (e.g. "414x896")',
+        required: false,
+        default: 'desktop'
       }
     ],
     executionMode: 'sequential' as const

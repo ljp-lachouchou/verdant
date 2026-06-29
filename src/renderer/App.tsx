@@ -25,10 +25,11 @@ export default function App() {
     if (activeSessionId) {
       dispatch(loadSessionMessages(activeSessionId))
     }
-  }, [dispatch, activeSessionId])
+  }, [activeSessionId, dispatch])
 
   useEffect(() => {
     document.documentElement.className = theme
+    document.documentElement.style.colorScheme = theme
   }, [theme])
 
   useEffect(() => {
@@ -39,7 +40,9 @@ export default function App() {
     if (!api?.getTitleBarHeight) return
 
     const apply = (h: number) => {
-      document.documentElement.style.setProperty('--titlebar-height', `${h}px`)
+      if (h > 0) {
+        document.documentElement.style.setProperty('--titlebar-height', `${h}px`)
+      }
     }
 
     apply(api.getTitleBarHeight())

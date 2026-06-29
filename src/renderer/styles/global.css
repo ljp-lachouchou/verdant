@@ -54,6 +54,7 @@
 
   /* Layout */
   --sidebar-width: 250px;
+  --titlebar-height: 28px;
 }
 
 :root.light {
@@ -105,12 +106,19 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .app-container {
   display: flex;
   height: 100vh;
   width: 100vw;
+}
+
+.sidebar,
+.chat-main,
+.status-sidebar {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 /* ============================================
@@ -135,7 +143,6 @@ body {
   width: 52px;
   min-width: 52px;
   align-items: center;
-  padding-top: 4px;
 }
 
 .icon-btn {
@@ -620,6 +627,45 @@ body {
 .wait-user-btn {
   align-self: flex-start;
   padding: 8px 24px;
+}
+
+.wait-user-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wait-user-option-btn {
+  padding: 8px 16px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.wait-user-option-btn:hover {
+  background: var(--brand-soft);
+  border-color: var(--brand-dim);
+  color: var(--brand);
+}
+
+.wait-user-custom-btn {
+  background: transparent;
+  border-style: dashed;
+  color: var(--text-3);
+}
+
+.wait-user-custom-input {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.wait-user-custom-input .form-input {
+  flex: 1;
 }
 
 @keyframes blink {
@@ -1669,6 +1715,186 @@ body {
   border-top: 1px solid var(--border);
   padding-top: 10px;
   margin-top: 2px;
+}
+
+/* Sub-Agent Block */
+.subagent-block {
+  margin: 6px 0;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-3);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.subagent-block.running { border-left-color: var(--warning); }
+.subagent-block.success { border-left-color: var(--brand); }
+.subagent-block.error { border-left-color: var(--error); }
+
+.subagent-block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.subagent-block-header:hover {
+  background: var(--bg-3);
+}
+
+.subagent-block-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.subagent-block-dot.running { background: var(--warning); animation: pulse 1.5s infinite; }
+.subagent-block-dot.success { background: var(--brand); }
+.subagent-block-dot.error { background: var(--error); }
+
+.subagent-block-icon {
+  font-size: 14px;
+}
+
+.subagent-block-name {
+  font-weight: 600;
+  color: var(--text-1);
+  font-size: 13px;
+  flex: 1;
+}
+
+.subagent-block-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-3);
+  background: var(--bg-3);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.subagent-block-status {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.subagent-block-status.running { color: var(--warning); }
+.subagent-block-status.success { color: var(--brand); }
+.subagent-block-status.error { color: var(--error); }
+
+.subagent-block-expand {
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+}
+
+.subagent-block-result {
+  border-top: 1px solid var(--border);
+  padding: 8px 14px;
+}
+
+.subagent-block-output {
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bg-0);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-1);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: var(--radius-xs);
+}
+
+.subagent-block-output code {
+  font-family: inherit;
+}
+
+/* Skills Modal */
+.skills-empty {
+  text-align: center;
+  padding: 30px 0;
+  color: var(--text-3);
+}
+
+.skills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skill-item-modal {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.skill-item-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.skill-item-modal-header:hover {
+  background: var(--bg-3);
+}
+
+.skill-item-modal-icon {
+  font-size: 14px;
+  color: var(--brand);
+}
+
+.skill-item-modal-name {
+  font-weight: 600;
+  color: var(--text-1);
+  font-size: 13px;
+  flex: 1;
+}
+
+.skill-item-modal-expand {
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+}
+
+.skill-item-modal-detail {
+  padding: 10px 14px 12px 36px;
+  border-top: 1px solid var(--border);
+}
+
+.skill-item-modal-desc {
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.skill-item-modal-path {
+  font-size: 11px;
+  color: var(--text-3);
+  word-break: break-all;
+}
+
+.skill-item-modal-path code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-2);
 }
 
 .message-content .md-table th {
