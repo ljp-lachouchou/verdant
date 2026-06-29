@@ -194,6 +194,25 @@
     
     [data-i18n] { transition: opacity 0.15s; }
     
+    /* Three.js canvas */
+    #bg-canvas {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
+    
+    /* Smooth scroll */
+    html { scroll-behavior: smooth; }
+    
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    
+    /* Parallax hero */
+    .hero-content { transition: transform 0.1s linear; }
+    
     @media (max-width: 768px) {
       .hero h1 { font-size: 44px; }
       .hero p { font-size: 16px; }
@@ -206,6 +225,8 @@
   </style>
 </head>
 <body>
+
+<canvas id="bg-canvas"></canvas>
 
 <!-- Nav -->
 <nav>
@@ -422,6 +443,95 @@ function renderArch(t) {
 }
 
 setLang('en');
+
+// === Scroll Reveal ===
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('visible');
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('section, .feature-card, .arch-layer').forEach(el => {
+  el.classList.add('reveal');
+  observer.observe(el);
+});
+
+// === Parallax Hero ===
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+  const hero = document.querySelector('.hero-content');
+  if (hero && scrollY < 800) {
+    hero.style.transform = `translateY(${scrollY * 0.15}px)`;
+    hero.style.opacity = `${1 - scrollY / 600}`;
+  }
+});
+
+// === Three.js Particle Background ===
+(function() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  
+  // Particles
+  const particles = [];
+  const count = 60;
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      r: Math.random() * 2 + 0.5,
+      o: Math.random() * 0.5 + 0.1
+    });
+  }
+  
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw connections
+    for (let i = 0; i < particles.length; i++) {
+      const p1 = particles[i];
+      for (let j = i + 1; j < particles.length; j++) {
+        const p2 = particles[j];
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 140) {
+          ctx.strokeStyle = `rgba(0, 229, 138, ${0.08 * (1 - dist / 140)})`;
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        }
+      }
+    }
+    
+    // Draw particles
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      
+      if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+      
+      ctx.fillStyle = `rgba(0, 229, 138, ${p.o})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
 </script>
 
 </body>
