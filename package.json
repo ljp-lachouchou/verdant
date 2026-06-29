@@ -3,7 +3,10 @@
   "version": "0.3.0",
   "description": "Verdant — Multi-agent desktop AI assistant",
   "main": "./out/main/index.js",
-  "author": "Verdant",
+  "author": {
+    "name": "Verdant",
+    "email": "verdant@example.com"
+  },
   "license": "MIT",
   "homepage": "https://ljp-lachouchou.github.io/verdant",
   "repository": {
