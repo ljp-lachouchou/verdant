@@ -10,7 +10,14 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: win
+          - os: ubuntu-latest
+            platform: linux
+      fail-fast: false
     
     runs-on: ${{ matrix.os }}
     
@@ -22,30 +29,37 @@ jobs:
         with:
           node-version: '20'
       
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libnotify-dev libnss3 libxss1 libasound2 libxtst6 xauth xvfb libgbm1
+      
       - name: Install dependencies
         run: npm ci
       
       - name: Rebuild native modules
-        run: npx electron-rebuild -f -w better-sqlite3,node-pty
+        run: npx electron-rebuild -f -w better-sqlite3
         continue-on-error: true
       
       - name: Build application
         run: npm run build
       
       - name: Package (macOS)
-        if: matrix.os == 'macos-latest'
+        if: matrix.platform == 'mac'
         run: npx electron-builder --mac --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
       
       - name: Package (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.platform == 'win'
         run: npx electron-builder --win --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Package (Linux)
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.platform == 'linux'
         run: npx electron-builder --linux --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -53,7 +67,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Verdant-${{ matrix.os }}
+          name: Verdant-${{ matrix.platform }}
           path: |
             release/*.dmg
             release/*.exe
@@ -61,6 +75,7 @@ jobs:
             release/*.deb
             release/*.zip
           retention-days: 30
+          if-no-files-found: warn
 
   release:
     needs: build
@@ -86,9 +101,9 @@ jobs:
             Multi-agent desktop AI assistant built with Electron + React.
             
             ### Downloads
-            - **macOS**: Verdant-${{ github.ref_name }}-arm64.dmg or x64.dmg
-            - **Windows**: Verdant-Setup-${{ github.ref_name }}.exe
-            - **Linux**: Verdant-${{ github.ref_name }}.AppImage
+            - **macOS**: .dmg file
+            - **Windows**: .exe installer
+            - **Linux**: .AppImage or .deb
             
             ### Quick Start
             1. Download and install for your platform
