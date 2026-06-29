@@ -209,7 +209,7 @@ export default function ChatWindow() {
       {!hasContent && (
         <div className="welcome-screen">
           <div className="welcome-logo">
-            <LogoIcon size={32} />
+            <img src="/icon.png" alt="Verdant" style={{ width: '48px', height: '48px', borderRadius: '12px' }} />
           </div>
           <h2>Verdant</h2>
           <p>Your AI coding assistant. Ask me to write code, run commands, or analyze files.</p>

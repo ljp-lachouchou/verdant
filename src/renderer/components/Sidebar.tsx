@@ -30,7 +30,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-title">
-          <LogoIcon size={20} />
+          <img src="/icon.png" alt="Verdant" style={{ width: '20px', height: '20px', borderRadius: '5px' }} />
           <span>Verdant</span>
         </div>
         <button className="icon-btn" onClick={() => dispatch(toggleSidebar())} aria-label="Collapse sidebar">

@@ -548,6 +548,16 @@ function registerIpcHandlers(): void {
 }
 
 app.whenReady().then(() => {
+  // Set app icon for macOS Dock
+  if (process.platform === 'darwin') {
+    try {
+      const { join } = require('path')
+      app.dock.setIcon(join(__dirname, '../../resources/icon.png'))
+    } catch {
+      // ignore
+    }
+  }
+
   initDatabase()
   registerIpcHandlers()
   createWindow()

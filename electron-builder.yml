@@ -12,7 +12,7 @@ mac:
   target:
     - dmg
     - zip
-  icon: resources/icon.png
+  icon: resources/icon.icns
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: resources/entitlements.plist
