@@ -17,7 +17,8 @@ module.exports = {
           "@shared/*": ["src/shared/*"],
           "@agent/*": ["src/agent/*"],
           "@tools/*": ["src/tools/*"],
-          "@storage/*": ["src/storage/*"]
+          "@storage/*": ["src/storage/*"],
+          "@runtime/*": ["src/runtime/*"]
         }
       }
     }]
@@ -25,8 +26,9 @@ module.exports = {
   moduleNameMapper: {
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
     '^@agent/(.*)$': '<rootDir>/src/agent/$1',
-    '^@tools/(.*)$': '<rootDir>/src/tools/$1',
+    '^tools/(.*)$': '<rootDir>/src/tools/$1',
     '^@storage/(.*)$': '<rootDir>/src/storage/$1',
+    '^@runtime/(.*)$': '<rootDir>/src/runtime/$1',
     '^electron$': '<rootDir>/tests/mocks/electron.ts',
     '^better-sqlite3$': '<rootDir>/tests/mocks/better-sqlite3.ts',
     '\\.(css|less|scss)$': '<rootDir>/tests/mocks/styleMock.ts'
@@ -51,7 +53,8 @@ module.exports = {
               "@shared/*": ["src/shared/*"],
               "@agent/*": ["src/agent/*"],
               "@tools/*": ["src/tools/*"],
-              "@storage/*": ["src/storage/*"]
+              "@storage/*": ["src/storage/*"],
+              "@runtime/*": ["src/runtime/*"]
             }
           }
         }]
@@ -61,6 +64,7 @@ module.exports = {
         '^@agent/(.*)$': '<rootDir>/src/agent/$1',
         '^@tools/(.*)$': '<rootDir>/src/tools/$1',
         '^@storage/(.*)$': '<rootDir>/src/storage/$1',
+        '^@runtime/(.*)$': '<rootDir>/src/runtime/$1',
         '^electron$': '<rootDir>/tests/mocks/electron.ts',
         '^better-sqlite3$': '<rootDir>/tests/mocks/better-sqlite3.ts'
       }
@@ -83,7 +87,8 @@ module.exports = {
               "@shared/*": ["src/shared/*"],
               "@agent/*": ["src/agent/*"],
               "@tools/*": ["src/tools/*"],
-              "@storage/*": ["src/storage/*"]
+              "@storage/*": ["src/storage/*"],
+              "@runtime/*": ["src/runtime/*"]
             }
           }
         }]
@@ -93,6 +98,7 @@ module.exports = {
         '^@agent/(.*)$': '<rootDir>/src/agent/$1',
         '^@tools/(.*)$': '<rootDir>/src/tools/$1',
         '^@storage/(.*)$': '<rootDir>/src/storage/$1',
+        '^@runtime/(.*)$': '<rootDir>/src/runtime/$1',
         '^electron$': '<rootDir>/tests/mocks/electron.ts',
         '^better-sqlite3$': '<rootDir>/tests/mocks/better-sqlite3.ts',
         '\\.(css|less|scss)$': '<rootDir>/tests/mocks/styleMock.ts'

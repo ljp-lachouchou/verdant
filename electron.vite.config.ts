@@ -11,7 +11,8 @@ export default defineConfig({
         '@main': resolve('src/main'),
         '@agent': resolve('src/agent'),
         '@tools': resolve('src/tools'),
-        '@storage': resolve('src/storage')
+        '@storage': resolve('src/storage'),
+        '@runtime': resolve('src/runtime')
       }
     },
     build: {

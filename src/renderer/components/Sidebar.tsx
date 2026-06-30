@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { createSession, deleteSession, setActiveSession } from '../store/chatSlice'
 import { toggleSidebar, toggleTheme, setShowSettings } from '../store/settingsSlice'
-import { LogoIcon, MenuIcon, PlusIcon, SettingsIcon, SunIcon, MoonIcon, TrashIcon } from './Icons'
+import { MenuIcon, PlusIcon, SettingsIcon, SunIcon, MoonIcon, TrashIcon } from './Icons'
 import SkillsModal from './SkillsModal'
 
 export default function Sidebar() {
   const dispatch = useAppDispatch()
   const sessions = useAppSelector((s) => s.chat.sessions)
   const activeSessionId = useAppSelector((s) => s.chat.activeSessionId)
+  const sessionStreams = useAppSelector((s) => s.chat.sessionStreams)
   const collapsed = useAppSelector((s) => s.settings.sidebarCollapsed)
   const theme = useAppSelector((s) => s.settings.theme)
   const [showSkills, setShowSkills] = useState(false)
@@ -56,6 +57,13 @@ export default function Sidebar() {
             }}
           >
             <span className="session-name">{session.name}</span>
+            {sessionStreams[session.id]?.isLoading && (
+              <span className="session-loading-dot" style={{
+                width: '6px', height: '6px', borderRadius: '50%',
+                background: 'var(--accent)', flexShrink: 0,
+                animation: 'pulse 1.5s ease-in-out infinite'
+              }} />
+            )}
             <button
               className="session-delete"
               onClick={(e) => {

@@ -1,8 +1,13 @@
-import type { Message, LLMResponse, AgentConfig, CompactionResult, AgentEvent } from '@shared/types'
+import type { LLMResponse, AgentConfig } from '@shared/types'
+
+export type PromptContent = string | Array<
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } }
+>
 
 export interface PromptSegment {
   role: 'system' | 'developer' | 'user' | 'assistant' | 'tool'
-  content: string
+  content: PromptContent
   toolCallId?: string
   reasoningContent?: string
   toolCalls?: Array<{
@@ -12,24 +17,6 @@ export interface PromptSegment {
   }>
 }
 
-export interface PromptManager {
-  addUserMessage(content: string): Message
-  addAssistantMessage(content: string, toolCalls?: Message['toolCalls'], reasoningContent?: string): Message
-  addToolResult(toolCallId: string, toolName: string, output: string, isError: boolean): Message
-  addSystemMessage(content: string): void
-  addSteeringMessage(content: string): Message
-  buildPrompt(): PromptSegment[]
-  convertToLlm?(): PromptSegment[]
-  getMessages(): Message[]
-  getActiveMessages(): Message[]
-  getContextTokenCount(): number
-  getFilesRead?(): string[]
-  getFilesModified?(): string[]
-  trackFileAccess?(path: string, modified: boolean): void
-  compact(summary: string): CompactionResult
-  clear(): void
-}
-
 export interface LLMProvider {
   query(prompt: PromptSegment[], config: AgentConfig): Promise<LLMResponse>
   streamQuery(
@@ -37,43 +24,6 @@ export interface LLMProvider {
     config: AgentConfig,
     onToken: (token: string) => void
   ): Promise<LLMResponse>
-}
-
-export type AgentEventHandler = (event: AgentEvent) => void
-
-export interface ToolHookContext {
-  toolName: string
-  args: Record<string, unknown>
-  sessionId: string
-}
-
-export interface BeforeToolCallResult {
-  block?: boolean
-  reason?: string
-  modifiedArgs?: Record<string, unknown>
-}
-
-export interface AfterToolCallResult {
-  modifiedOutput?: string
-  isError?: boolean
-  terminate?: boolean
-}
-
-export interface AgentLoopCallbacks {
-  onEvent?: (event: AgentEvent) => void
-  onToken?: (token: string) => void
-  onTextChunk?: (text: string) => void
-  onToolCall?: (name: string, args: Record<string, unknown>) => void
-  onToolResult?: (name: string, output: string, isError: boolean) => void
-  onComplete?: (text: string) => void
-  onError?: (error: Error) => void
-  onMessagePersist?: (message: Message) => void
-  onCompaction?: (result: CompactionResult) => void
-  beforeToolCall?: (ctx: ToolHookContext) => BeforeToolCallResult | void
-  afterToolCall?: (ctx: ToolHookContext, output: string, isError: boolean) => AfterToolCallResult | void
-  shouldStop?: () => boolean
-  shouldStopAfterTurn?: () => boolean
-  getSteeringMessages?: () => Message[]
 }
 
 export const DEFAULT_CONFIG: AgentConfig = {

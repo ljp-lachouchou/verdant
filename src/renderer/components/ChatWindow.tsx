@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import MessageBubble from './MessageBubble'
+import { ContextMenu } from './ContextMenu'
 import type { ContentBlock } from '@shared/types'
 import { setShowSettings } from '../store/settingsSlice'
 import { continueAfterWait } from '../store/chatSlice'
-import { LogoIcon, SettingsIcon, ErrorIcon, AgentIcon, TerminalIcon, CheckIcon, ClockIcon, ChevronDownIcon, ChevronRightIcon } from './Icons'
+import { SettingsIcon, ErrorIcon, AgentIcon, TerminalIcon, CheckIcon, ClockIcon, ChevronDownIcon, ChevronRightIcon } from './Icons'
 
 function StreamingBlock({ block }: { block: ContentBlock }) {
   if (block.type === 'skill') {
@@ -30,6 +31,8 @@ function StreamingBlock({ block }: { block: ContentBlock }) {
 
   const isRunning = block.status === 'running'
   const isError = block.status === 'error'
+  const [showPrompt, setShowPrompt] = useState(false)
+  const hasPrompt = !!block.promptInput
 
   return (
     <div className={`inline-tool-card ${isError ? 'error' : ''} ${isRunning ? 'running' : ''}`}>
@@ -40,8 +43,25 @@ function StreamingBlock({ block }: { block: ContentBlock }) {
         <TerminalIcon size={12} />
         <span className="inline-tool-name">{block.toolName}</span>
         {block.command && <span className="inline-tool-cmd">{block.command.substring(0, 60)}</span>}
+        {hasPrompt && (
+          <button
+            className="inline-tool-prompt-toggle"
+            onClick={() => setShowPrompt(!showPrompt)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', fontSize: '11px', padding: '0 4px' }}
+          >
+            {showPrompt ? <ChevronDownIcon size={10} /> : <ChevronRightIcon size={10} />} prompt
+          </button>
+        )}
         <span className="inline-tool-status">{isRunning ? 'running' : isError ? 'failed' : 'done'}</span>
       </div>
+      {hasPrompt && showPrompt && (
+        <div className="inline-tool-prompt" style={{ padding: '6px 10px', background: 'var(--bg-secondary)', borderRadius: '4px', margin: '4px 0', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-dim)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Prompt Input</div>
+          <pre style={{ margin: 0, fontSize: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--text)', maxHeight: '300px', overflow: 'auto' }}>
+            <code>{block.promptInput}</code>
+          </pre>
+        </div>
+      )}
       {block.command && (
         <div className="inline-tool-command">
           <code>$ {block.command}</code>
@@ -117,7 +137,6 @@ function WaitUserBanner({ message, screenshot, options, onRespond }: {
   options?: Array<{ label: string; value: string }>
   onRespond: (response?: string) => void
 }) {
-  const [showCustom, setShowCustom] = useState(false)
   const [customInput, setCustomInput] = useState('')
 
   const hasOptions = options && options.length > 0
@@ -139,43 +158,30 @@ function WaitUserBanner({ message, screenshot, options, onRespond }: {
               {opt.label}
             </button>
           ))}
-          <button
-            className="wait-user-option-btn wait-user-custom-btn"
-            onClick={() => setShowCustom(!showCustom)}
-          >
-            Custom
-          </button>
         </div>
       )}
-      {showCustom && (
-        <div className="wait-user-custom-input">
-          <input
-            type="text"
-            className="form-input"
-            value={customInput}
-            onChange={(e) => setCustomInput(e.target.value)}
-            placeholder="Type your response..."
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && customInput.trim()) {
-                onRespond(customInput.trim())
-              }
-            }}
-            autoFocus
-          />
-          <button
-            className="btn-primary"
-            onClick={() => onRespond(customInput.trim() || undefined)}
-            disabled={!customInput.trim()}
-          >
-            Send
-          </button>
-        </div>
-      )}
-      {!hasOptions && (
-        <button className="btn-primary wait-user-btn" onClick={() => onRespond(undefined)}>
-          Continue
+      <div className="wait-user-custom-input">
+        <input
+          type="text"
+          className="form-input"
+          value={customInput}
+          onChange={(e) => setCustomInput(e.target.value)}
+          placeholder="Type your response..."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && customInput.trim()) {
+              onRespond(customInput.trim())
+            }
+          }}
+          autoFocus
+        />
+        <button
+          className="btn-primary"
+          onClick={() => onRespond(customInput.trim() || undefined)}
+          disabled={!customInput.trim()}
+        >
+          Send
         </button>
-      )}
+      </div>
     </div>
   )
 }
@@ -183,25 +189,29 @@ function WaitUserBanner({ message, screenshot, options, onRespond }: {
 export default function ChatWindow() {
   const dispatch = useAppDispatch()
   const messages = useAppSelector((s) => s.chat.messages)
-  const streamingBlocks = useAppSelector((s) => s.chat.streamingBlocks)
-  const streamingSessionId = useAppSelector((s) => s.chat.streamingSessionId)
   const activeSessionId = useAppSelector((s) => s.chat.activeSessionId)
-  const error = useAppSelector((s) => s.chat.error)
-  const isLoading = useAppSelector((s) => s.chat.isLoading)
   const needsConfig = useAppSelector((s) => s.chat.needsConfig)
-  const waitUser = useAppSelector((s) => s.chat.waitUser)
   const endRef = useRef<HTMLDivElement>(null)
+
+  const sessionStream = useAppSelector((s) => {
+    if (!activeSessionId) return null
+    return s.chat.sessionStreams[activeSessionId] || null
+  })
+
+  const streamingBlocks = sessionStream?.streamingBlocks || []
+  const isLoading = sessionStream?.isLoading || false
+  const error = sessionStream?.error || null
+  const waitUser = sessionStream?.waitUser || null
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, streamingBlocks, error, needsConfig])
 
   const visibleMessages = messages.filter(msg => msg.role !== 'system' || msg.isSummary)
-  const isStreamingThisSession = streamingSessionId === activeSessionId && streamingBlocks.length > 0
-  const isLoadingThisSession = isLoading && streamingSessionId === activeSessionId
+  const isStreamingThisSession = streamingBlocks.length > 0
+  const isLoadingThisSession = isLoading
   const hasContent = visibleMessages.length > 0 || isStreamingThisSession || isLoadingThisSession
 
-  // Check if any tool is still running
   const hasRunningTool = streamingBlocks.some(b => b.type === 'tool_call' && b.status === 'running')
 
   return (
@@ -234,7 +244,6 @@ export default function ChatWindow() {
         </div>
       )}
 
-      {/* Streaming blocks — only show for the active streaming session */}
       {isStreamingThisSession && (
         <div className="message message-assistant">
           <div className="message-avatar">
@@ -245,7 +254,6 @@ export default function ChatWindow() {
             {streamingBlocks.map((block, i) => (
               <StreamingBlock key={i} block={block} />
             ))}
-            {/* Output indicator at the bottom */}
             <div className="streaming-indicator">
               <span className="streaming-indicator-dots">
                 <span></span><span></span><span></span>
@@ -283,6 +291,7 @@ export default function ChatWindow() {
       )}
 
       <div ref={endRef} />
+      <ContextMenu />
     </div>
   )
 }

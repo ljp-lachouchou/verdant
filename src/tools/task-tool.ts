@@ -1,7 +1,9 @@
 import type { Tool, ToolResult, ToolContext, ToolUpdateCallback } from './types'
 import type { AgentConfig, AgentEvent } from '@shared/types'
-import type { LLMProvider, AgentLoopCallbacks } from '@agent/types'
-import { AgentLoop } from '@agent/loop'
+import type { LLMProvider } from '@agent/types'
+import type { RuntimeLoopCallbacks } from '@runtime/loop/runtime-loop'
+import type { ResourceRegistry } from '@runtime/resource/registry'
+import { GoalManager, StateProjector, ContextFormatter, ExecutorManager, MemoryResource, RuntimeLoop } from '@runtime/index'
 import { createFullToolRegistry } from './registry'
 import { SkillTool, SkillLoader } from './skill-tool'
 import { randomUUID } from 'crypto'
@@ -17,15 +19,16 @@ export interface TaskToolConfig {
   llmProvider: LLMProvider
   baseConfig: AgentConfig
   toolFactory: () => Map<string, Tool>
-  parentCallbacks: AgentLoopCallbacks
+  parentCallbacks: RuntimeLoopCallbacks
   parentSessionId: string
   skillLoader?: SkillLoader
+  resourceRegistry: ResourceRegistry
 }
 
 export class TaskTool implements Tool {
   definition = {
     name: 'task',
-    description: 'Delegate a sub-task to a sub-agent. The sub-agent runs its own agent loop with full tool access including skills. Use this to parallelize work or delegate complex sub-tasks. The sub-agent cannot call task tool (no infinite recursion) but CAN use all other tools: bash, read, write, edit, ls, browser, skill, ask_user, vibe_coding.',
+    description: 'Delegate a sub-task to a sub-agent. The sub-agent runs its own runtime loop with full tool access including skills. Use this to parallelize work or delegate complex sub-tasks. The sub-agent cannot call task tool (no infinite recursion) but CAN use all other tools: bash, read, write, edit, ls, browser, skill, ask_user, vibe_coding.',
     parameters: [
       {
         name: 'description',
@@ -50,7 +53,7 @@ export class TaskTool implements Tool {
   }
 
   private config: TaskToolConfig
-  private activeSubAgents: Map<string, AgentLoop> = new Map()
+  private activeSubAgents: Map<string, RuntimeLoop> = new Map()
 
   constructor(config: TaskToolConfig) {
     this.config = config
@@ -79,19 +82,12 @@ export class TaskTool implements Tool {
 
     onUpdate?.({ output: `Sub-agent "${description}" started...` })
 
-    // Build sub-agent config with skill list in system prompt
     const skillLoader = this.config.skillLoader
     const skillsText = skillLoader?.getSkillListText() || ''
-    const subConfig: AgentConfig = {
-      ...this.config.baseConfig,
-      systemPrompt: SUBAGENT_PROMPT + skillsText,
-      maxIterations: Math.min(this.config.baseConfig.maxIterations, 25),
-    }
+    const subSystemPrompt = SUBAGENT_PROMPT + skillsText
 
-    // Build tool registry — include all tools EXCEPT task (no recursion)
     const tools = createFullToolRegistry()
 
-    // Add skill tool if skills are available
     if (skillLoader && skillLoader.getAllSkills().length > 0) {
       tools.set('skill', new SkillTool(skillLoader))
     }
@@ -109,7 +105,25 @@ export class TaskTool implements Tool {
       }
     }
 
-    const subCallbacks: AgentLoopCallbacks = {
+    const subGoalManager = new GoalManager()
+    const subMemoryResource = new MemoryResource()
+    const subProjector = new StateProjector(
+      this.config.resourceRegistry,
+      subGoalManager,
+      subMemoryResource
+    )
+    const subFormatter = new ContextFormatter(
+      subSystemPrompt,
+      `Sub-agent: ${description}`
+    )
+    const subExecutor = new ExecutorManager(tools, {}, {
+      sessionId: `${this.config.parentSessionId}_${subAgentId}`,
+      workingDirectory: context.workingDirectory,
+      timeout: this.config.baseConfig.shellTimeout,
+      maxOutputLength: this.config.baseConfig.maxOutputLength
+    })
+
+    const subCallbacks: RuntimeLoopCallbacks = {
       onToken: undefined,
       onTextChunk: undefined,
       onToolCall: (name, toolArgs) => {
@@ -122,18 +136,20 @@ export class TaskTool implements Tool {
       onError: (error) => {
         console.error(`[TaskTool] sub-agent ${subAgentId} error: ${error.message}`)
       },
-      onMessagePersist: (_msg) => {
-        // Don't persist sub-agent messages to the main session DB
-        // They are ephemeral — only the task tool result is persisted by the parent
-      },
       shouldStop: () => this.config.parentCallbacks.shouldStop?.() ?? false
     }
 
-    const loop = new AgentLoop(
-      `${this.config.parentSessionId}_${subAgentId}`,
+    const loop = new RuntimeLoop(
+      subProjector,
+      subFormatter,
+      subExecutor,
       this.config.llmProvider,
-      tools,
-      subConfig,
+      subGoalManager,
+      {
+        maxIterations: Math.min(this.config.baseConfig.maxIterations, 25),
+        systemPrompt: subSystemPrompt,
+        agentConfig: { ...this.config.baseConfig, systemPrompt: subSystemPrompt }
+      },
       subCallbacks
     )
 

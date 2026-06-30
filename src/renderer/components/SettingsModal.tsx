@@ -33,6 +33,14 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
     enabled: false, cliPath: '', argsTemplate: '{prompt}', workingDir: '', timeout: 120000,
     verifyType: 'none', verifyUrl: '', verifyCommand: ''
   })
+  const [showVision, setShowVision] = useState(false)
+  const [ollamaEnabled, setOllamaEnabled] = useState(false)
+  const [ollamaHost, setOllamaHost] = useState('http://localhost:11434')
+  const [ollamaModel, setOllamaModel] = useState('moondream')
+  const [remoteVisionEnabled, setRemoteVisionEnabled] = useState(false)
+  const [remoteVisionApiBaseUrl, setRemoteVisionApiBaseUrl] = useState('https://api.openai.com/v1')
+  const [remoteVisionApiKey, setRemoteVisionApiKey] = useState('')
+  const [remoteVisionModel, setRemoteVisionModel] = useState('gpt-4o')
   const [selectedPreset, setSelectedPreset] = useState('')
 
   useEffect(() => {
@@ -49,6 +57,17 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
         const preset = PRESETS.find(p => p.cliPath === config.vibeCoding?.cliPath)
         if (preset) setSelectedPreset(preset.name)
       }
+      if (config.ollama) {
+        setOllamaEnabled(config.ollama.enabled)
+        setOllamaHost(config.ollama.host || 'http://localhost:11434')
+        setOllamaModel(config.ollama.model || 'moondream')
+      }
+      if (config.remoteVision) {
+        setRemoteVisionEnabled(config.remoteVision.enabled)
+        setRemoteVisionApiBaseUrl(config.remoteVision.apiBaseUrl || 'https://api.openai.com/v1')
+        setRemoteVisionApiKey(config.remoteVision.apiKey || '')
+        setRemoteVisionModel(config.remoteVision.model || 'gpt-4o')
+      }
     }
   }, [config])
 
@@ -56,7 +75,11 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
 
   const handleSave = async () => {
     setSaving(true)
-    await dispatch(updateConfig({ apiKey, apiBaseUrl, model, vibeCoding: vibe }))
+    await dispatch(updateConfig({
+      apiKey, apiBaseUrl, model, vibeCoding: vibe,
+      ollama: { enabled: ollamaEnabled, host: ollamaHost, model: ollamaModel },
+      remoteVision: { enabled: remoteVisionEnabled, apiBaseUrl: remoteVisionApiBaseUrl, apiKey: remoteVisionApiKey, model: remoteVisionModel }
+    }))
     setSaving(false)
     onClose()
   }
@@ -242,6 +265,46 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
               </div>
             </div>
           )}
+
+          <div className="form-group">
+            <label className="form-label" style={{ cursor: 'pointer' }} onClick={() => setShowVision(!showVision)}>
+              Vision Providers {showVision ? '▼' : '▶'} <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>(eyes for perceiving the world)</span>
+            </label>
+            {showVision && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+
+                <div style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '10px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, marginBottom: '8px' }}>
+                    <input type="checkbox" checked={ollamaEnabled} onChange={(e) => setOllamaEnabled(e.target.checked)} />
+                    Ollama (Local — Free)
+                  </label>
+                  {ollamaEnabled && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <input type="text" className="form-input" value={ollamaHost} onChange={(e) => setOllamaHost(e.target.value)} placeholder="http://localhost:11434" />
+                      <input type="text" className="form-input" value={ollamaModel} onChange={(e) => setOllamaModel(e.target.value)} placeholder="Model (e.g. moondream, llava, minicpm-v)" />
+                      <p className="form-hint">Install: ollama pull moondream · Recommended: moondream (1.9GB, fast), llava (4.7GB, better quality)</p>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '10px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, marginBottom: '8px' }}>
+                    <input type="checkbox" checked={remoteVisionEnabled} onChange={(e) => setRemoteVisionEnabled(e.target.checked)} />
+                    Remote Vision API (Cloud)
+                  </label>
+                  {remoteVisionEnabled && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <input type="text" className="form-input" value={remoteVisionApiBaseUrl} onChange={(e) => setRemoteVisionApiBaseUrl(e.target.value)} placeholder="https://api.openai.com/v1" />
+                      <input type="password" className="form-input" value={remoteVisionApiKey} onChange={(e) => setRemoteVisionApiKey(e.target.value)} placeholder="API Key" />
+                      <input type="text" className="form-input" value={remoteVisionModel} onChange={(e) => setRemoteVisionModel(e.target.value)} placeholder="Model (e.g. gpt-4o)" />
+                    </div>
+                  )}
+                </div>
+
+                <p className="form-hint">Ollama is checked first (free, local). If unavailable, Remote Vision API is used as fallback.</p>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="modal-footer">

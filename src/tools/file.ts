@@ -51,7 +51,7 @@ export class FileReadTool implements Tool {
 export class FileWriteTool implements Tool {
   definition = {
     name: 'write',
-    description: 'Write content to a file, creating directories if needed.',
+    description: 'Write text content to a file. Best for small patches, config files, or simple text. For writing code (components, features, applications), prefer the vibe_coding tool if available.',
     parameters: [
       {
         name: 'path',
@@ -110,7 +110,7 @@ export class FileWriteTool implements Tool {
 export class FileEditTool implements Tool {
   definition = {
     name: 'edit',
-    description: 'Edit a file by replacing old text with new text.',
+    description: 'Edit a file by replacing old text with new text. Best for small targeted patches. For larger code changes, prefer the vibe_coding tool if available.',
     parameters: [
       {
         name: 'path',

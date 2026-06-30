@@ -14,7 +14,9 @@ export default function App() {
   const activeSessionId = useAppSelector((s) => s.chat.activeSessionId)
   const theme = useAppSelector((s) => s.settings.theme)
   const showSettings = useAppSelector((s) => s.settings.showSettings)
-  const isLoading = useAppSelector((s) => s.chat.isLoading)
+  const isLoading = useAppSelector((s) => {
+    return Object.values(s.chat.sessionStreams).some(stream => stream.isLoading)
+  })
 
   useEffect(() => {
     dispatch(initSessions())

@@ -15,6 +15,7 @@ export interface ContentBlock {
   imageAlt?: string
   skillName?: string
   skillDescription?: string
+  promptInput?: string
   subAgentName?: string
   subAgentId?: string
   subAgentStatus?: 'running' | 'success' | 'error'
@@ -88,6 +89,21 @@ export interface AgentConfig {
   apiKey: string
   vibeCoding?: VibeCodingConfig
   skillPermissions?: Record<string, 'allow' | 'deny' | 'ask'>
+  ollama?: OllamaConfig
+  remoteVision?: RemoteVisionConfig
+}
+
+export interface OllamaConfig {
+  host: string
+  model: string
+  enabled: boolean
+}
+
+export interface RemoteVisionConfig {
+  enabled: boolean
+  apiBaseUrl: string
+  apiKey: string
+  model: string
 }
 
 export type VerifyType = 'none' | 'screenshot' | 'test' | 'both'

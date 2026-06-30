@@ -25,9 +25,6 @@ export class BlockSerializer {
     if (!msg.toolCalls || msg.toolCalls.length === 0) return undefined
 
     const blocks: ContentBlock[] = []
-    if (msg.content) {
-      blocks.push({ type: 'text', text: msg.content })
-    }
 
     for (const tc of msg.toolCalls) {
       blocks.push({

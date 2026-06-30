@@ -30,11 +30,13 @@ function getShellPath(): string {
 export class VibeCodingTool implements Tool {
   definition = {
     name: 'vibe_coding',
-    description: `Delegate coding tasks to an external AI coding CLI tool (e.g. Claude Code, Aider, Cursor CLI). Use this for ANY programming task: writing code, fixing bugs, refactoring, creating projects. The CLI tool works directly in the project directory with full file access. Simply describe what you want to build or fix.
+    description: `Coding agent — delegates to an external AI coding CLI (e.g. Claude Code, Aider). Use this as the PRIMARY tool for ANY coding task: creating new files, writing components, implementing features, fixing bugs, refactoring. The CLI agent has superior coding capabilities and works directly in the project directory with full file access. Simply describe what to build or fix — it handles the implementation.
 
-After the CLI tool completes:
-- If it created frontend files (HTML, web pages), use the "browser" tool to open the file and take a screenshot to show the user the result.
-- If it created backend code, consider running tests or checking if the service starts.
+Use write/edit only for small text patches or config tweaks. For real code, use vibe_coding.
+
+After completion:
+- Frontend files (HTML, web pages): use the "browser" tool to open and screenshot
+- Backend code: consider running tests
 - Always report what was created/modified to the user.`,
     parameters: [
       {

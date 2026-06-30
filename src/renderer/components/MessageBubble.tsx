@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Message, ContentBlock } from '@shared/types'
 import { UserIcon, AgentIcon, TerminalIcon, CheckIcon, ErrorIcon, ClockIcon, ChevronDownIcon, ChevronRightIcon } from './Icons'
+import { showContextMenu } from './ContextMenu'
 
 interface MessageBubbleProps {
   message: Message
@@ -51,6 +52,49 @@ function formatMarkdown(text: string): string {
   html = html.replace(/<p>(<ul[\s\S]*?<\/ul>)<\/p>/g, '$1')
   html = html.replace(/<p>(<pre[\s\S]*?<\/pre>)<\/p>/g, '$1')
   return html
+}
+
+function getMessageText(message: Message): string {
+  if (message.content) return message.content
+  if (message.blocks) {
+    return message.blocks
+      .filter(b => b.type === 'text' && b.text)
+      .map(b => b.text)
+      .join('\n')
+  }
+  return ''
+}
+
+function getMessageImages(message: Message): ContentBlock[] {
+  if (!message.blocks) return []
+  return message.blocks.filter(b => b.type === 'image' && b.imagePath)
+}
+
+function handleContextMenu(e: React.MouseEvent, message: Message): void {
+  e.preventDefault()
+  const text = getMessageText(message)
+  const images = getMessageImages(message)
+  const api = (window as unknown as { agentAPI: { copyText: (t: string) => void; copyImage: (d: string) => void } }).agentAPI
+
+  const items = []
+
+  if (images.length > 0) {
+    items.push({
+      label: 'Copy',
+      icon: '📋',
+      onClick: () => api.copyImage(images[0].imagePath || '')
+    })
+  } else if (text) {
+    items.push({
+      label: 'Copy',
+      icon: '📋',
+      onClick: () => api.copyText(text)
+    })
+  }
+
+  if (items.length === 0) return
+
+  showContextMenu(e.clientX, e.clientY, items)
 }
 
 function ToolBlock({ block }: { block: ContentBlock }) {
@@ -166,7 +210,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
 
   if (message.role === 'system' && message.isSummary) {
     return (
-      <div className="message message-summary">
+      <div className="message message-summary" onContextMenu={(e) => handleContextMenu(e, message)}>
         <div className="summary-badge">Summary</div>
         <div className="message-content" dangerouslySetInnerHTML={{ __html: formatMarkdown(message.content) }} />
       </div>
@@ -178,7 +222,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
   // Render using blocks if available
   if (message.blocks && message.blocks.length > 0) {
     return (
-      <div className={`message ${isUser ? 'message-user' : 'message-assistant'}`}>
+      <div className={`message ${isUser ? 'message-user' : 'message-assistant'}`} onContextMenu={(e) => handleContextMenu(e, message)}>
         <div className="message-avatar">
           {isUser ? <UserIcon size={16} /> : <AgentIcon size={16} />}
         </div>
@@ -206,7 +250,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
 
   // Fallback: plain content
   return (
-    <div className={`message ${isUser ? 'message-user' : 'message-assistant'}`}>
+    <div className={`message ${isUser ? 'message-user' : 'message-assistant'}`} onContextMenu={(e) => handleContextMenu(e, message)}>
       <div className="message-avatar">
         {isUser ? <UserIcon size={16} /> : <AgentIcon size={16} />}
       </div>

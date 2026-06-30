@@ -1,9 +1,13 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, clipboard, nativeImage } from 'electron'
 import type { AgentConfig, Message, Session, AgentStreamEvent } from '@shared/types'
 
+export interface SendMessageOptions {
+  images?: Array<{ data: string; mediaType: string }>
+}
+
 const api = {
-  sendAgentMessage: (input: string): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke('agent:send', input),
+  sendAgentMessage: (input: string, options?: SendMessageOptions): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('agent:send', input, options),
 
   stopAgent: (): Promise<{ success: boolean }> =>
     ipcRenderer.invoke('agent:stop'),
@@ -83,7 +87,24 @@ const api = {
   },
 
   browserContinue: (response?: string): Promise<void> =>
-    ipcRenderer.invoke('browser:continue', { action: response ? 'respond' : 'continue', response })
+    ipcRenderer.invoke('browser:continue', { action: response ? 'respond' : 'continue', response }),
+
+  copyText: (text: string): void => {
+    clipboard.writeText(text)
+  },
+
+  copyImage: (dataUrl: string): void => {
+    if (dataUrl.startsWith('data:image/')) {
+      const base64 = dataUrl.split(',')[1]
+      const img = nativeImage.createFromBuffer(Buffer.from(base64, 'base64'))
+      if (!img.isEmpty()) {
+        clipboard.writeImage(img)
+      }
+    }
+  },
+
+  persistMessage: (message: Record<string, unknown>): Promise<void> =>
+    ipcRenderer.invoke('message:persist', message)
 }
 
 export type AgentAPI = typeof api

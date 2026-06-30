@@ -17,8 +17,8 @@ Use this when:
 - You encountered a captcha or need human verification
 - You need the user to provide information
 
-If you provide "options", the UI will show buttons for each option plus a custom input field. The user's choice is returned as the result.
-If you don't provide "options", the UI shows a Continue button only.
+If you provide "options", the UI will show buttons for each option. A text input is always available for the user to type a custom response.
+If you don't provide "options", the UI shows a text input with a Continue button.
 
 Examples:
 - ask_user(message="Please log in, then click Continue")

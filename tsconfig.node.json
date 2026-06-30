@@ -16,7 +16,8 @@
       "@main/*": ["src/main/*"],
       "@agent/*": ["src/agent/*"],
       "@tools/*": ["src/tools/*"],
-      "@storage/*": ["src/storage/*"]
+      "@storage/*": ["src/storage/*"],
+      "@runtime/*": ["src/runtime/*"]
     }
   },
   "include": [
@@ -26,6 +27,7 @@
     "src/tools/**/*",
     "src/storage/**/*",
     "src/shared/**/*",
+    "src/runtime/**/*",
     "electron.vite.config.ts"
   ]
 }

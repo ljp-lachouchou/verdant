@@ -5,9 +5,11 @@ import { TaskTool } from './task-tool'
 import { VibeCodingTool } from './vibe-coding-tool'
 import { BrowserTool } from './browser-tool'
 import { AskUserTool } from './ask-user-tool'
+import { EvaluateImagesTool } from './evaluate-images-tool'
 import { SkillLoader, SkillTool, SkillPermission } from './skill-tool'
 import type { TaskToolConfig } from './task-tool'
 import type { VibeCodingConfig } from '@shared/types'
+import type { VisionResource } from '@runtime/resource/vision'
 
 export function createDefaultToolRegistry(): ToolRegistry {
   const registry: ToolRegistry = new Map()
@@ -35,11 +37,19 @@ export function createFullToolRegistry(): ToolRegistry {
   return registry
 }
 
-export function createMultiAgentToolRegistry(taskToolConfig: TaskToolConfig, vibeCodingConfig?: VibeCodingConfig, skillLoader?: SkillLoader): ToolRegistry {
+export function createMultiAgentToolRegistry(
+  taskToolConfig: TaskToolConfig,
+  vibeCodingConfig?: VibeCodingConfig,
+  skillLoader?: SkillLoader,
+  visionResource?: VisionResource
+): ToolRegistry {
   const registry = createFullToolRegistry()
   registry.set('task', new TaskTool(taskToolConfig))
   if (vibeCodingConfig?.enabled) {
     registry.set('vibe_coding', new VibeCodingTool(vibeCodingConfig))
+  }
+  if (visionResource) {
+    registry.set('evaluate_images', new EvaluateImagesTool(visionResource))
   }
   if (skillLoader && skillLoader.getAllSkills().length > 0) {
     registry.set('skill', new SkillTool(skillLoader))

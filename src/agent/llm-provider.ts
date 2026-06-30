@@ -18,6 +18,27 @@ export class OpenAILLMProvider implements LLMProvider {
     this.toolDefinitions = tools
   }
 
+  private stripImages(prompt: PromptSegment[]): PromptSegment[] {
+    return prompt.map(seg => {
+      if (Array.isArray(seg.content)) {
+        const textParts = seg.content.filter(p => p.type === 'text')
+        const imageCount = seg.content.filter(p => p.type === 'image_url').length
+        const textContent = textParts.map(p => p.text).join('\n')
+        return {
+          ...seg,
+          content: imageCount > 0
+            ? `${textContent}\n\n[Note: ${imageCount} image(s) were attached but the current model does not support image input. Use tools like browser screenshot or file read to analyze visual content.]`
+            : textContent
+        }
+      }
+      return seg
+    })
+  }
+
+  private hasImageContent(prompt: PromptSegment[]): boolean {
+    return prompt.some(seg => Array.isArray(seg.content) && seg.content.some(p => p.type === 'image_url'))
+  }
+
   private buildMessages(prompt: PromptSegment[]): Array<Record<string, unknown>> {
     return prompt.map(seg => {
       const role = seg.role === 'developer' ? 'system' : seg.role
@@ -57,6 +78,10 @@ export class OpenAILLMProvider implements LLMProvider {
         }
       }
 
+      if (role === 'user' && Array.isArray(seg.content)) {
+        return { role, content: seg.content }
+      }
+
       return { role, content: seg.content }
     })
   }
@@ -91,7 +116,8 @@ export class OpenAILLMProvider implements LLMProvider {
       }
     }
 
-    const body: Record<string, unknown> = {
+    let effectivePrompt = prompt
+    let body: Record<string, unknown> = {
       model: config.model,
       messages: this.buildMessages(prompt),
       max_tokens: 8192,
@@ -104,7 +130,7 @@ export class OpenAILLMProvider implements LLMProvider {
       console.log(`[LLM] tools: ${this.toolDefinitions.map(t => t.name).join(', ')}`)
     }
 
-    const response = await fetch(`${config.apiBaseUrl}/chat/completions`, {
+    let response = await fetch(`${config.apiBaseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,6 +138,30 @@ export class OpenAILLMProvider implements LLMProvider {
       },
       body: JSON.stringify(body)
     })
+
+    if (!response.ok && this.hasImageContent(effectivePrompt)) {
+      console.log(`[LLM] API rejected image content (${response.status}), retrying with text-only`)
+      effectivePrompt = this.stripImages(effectivePrompt)
+      body = {
+        model: config.model,
+        messages: this.buildMessages(effectivePrompt),
+        max_tokens: 8192,
+        temperature: 0.7
+      }
+      if (this.toolDefinitions.length > 0) {
+        body.tools = this.buildTools()
+        body.tool_choice = 'auto'
+      }
+
+      response = await fetch(`${config.apiBaseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`
+        },
+        body: JSON.stringify(body)
+      })
+    }
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -136,7 +186,8 @@ export class OpenAILLMProvider implements LLMProvider {
       return { text: errorMsg, done: true }
     }
 
-    const body: Record<string, unknown> = {
+    let effectivePrompt = prompt
+    let body: Record<string, unknown> = {
       model: config.model,
       messages: this.buildMessages(prompt),
       max_tokens: 8192,
@@ -150,7 +201,7 @@ export class OpenAILLMProvider implements LLMProvider {
       console.log(`[LLM] tools: ${this.toolDefinitions.map(t => t.name).join(', ')}`)
     }
 
-    const response = await fetch(`${config.apiBaseUrl}/chat/completions`, {
+    let response = await fetch(`${config.apiBaseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -158,6 +209,34 @@ export class OpenAILLMProvider implements LLMProvider {
       },
       body: JSON.stringify(body)
     })
+
+    if (!response.ok && this.hasImageContent(effectivePrompt)) {
+      const errorText = await response.text()
+      console.log(`[LLM] API rejected image content (${response.status}), retrying with text-only`)
+      console.log(`[LLM] Error: ${errorText.substring(0, 200)}`)
+
+      effectivePrompt = this.stripImages(effectivePrompt)
+      body = {
+        model: config.model,
+        messages: this.buildMessages(effectivePrompt),
+        max_tokens: 8192,
+        temperature: 0.7,
+        stream: true
+      }
+      if (this.toolDefinitions.length > 0) {
+        body.tools = this.buildTools()
+        body.tool_choice = 'auto'
+      }
+
+      response = await fetch(`${config.apiBaseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`
+        },
+        body: JSON.stringify(body)
+      })
+    }
 
     if (!response.ok) {
       const errorText = await response.text()

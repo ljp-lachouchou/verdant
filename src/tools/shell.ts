@@ -1,6 +1,6 @@
 import { spawn, ChildProcess } from 'child_process'
 import { platform } from 'os'
-import { accessSync, constants } from 'fs'
+import { accessSync, constants, openSync } from 'fs'
 import type { Tool, ToolResult, ToolContext, ToolUpdateCallback } from './types'
 import { randomUUID } from 'crypto'
 
@@ -24,6 +24,25 @@ function getShellPath(): string {
   }
   resolvedShell = process.env.SHELL || '/bin/sh'
   return resolvedShell
+}
+
+function isBackgroundCommand(cmd: string): boolean {
+  let inSingle = false
+  let inDouble = false
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i]
+    if (ch === "'" && !inDouble) inSingle = !inSingle
+    else if (ch === '"' && !inSingle) inDouble = !inDouble
+    else if (ch === '&' && !inSingle && !inDouble) {
+      if (cmd[i + 1] === '&') { i++; continue }
+      if (i === cmd.length - 1 || /\s/.test(cmd[i + 1])) return true
+    }
+  }
+  return false
+}
+
+function stripBgOperator(cmd: string): string {
+  return cmd.trim().replace(/&\s*$/, '').trim()
 }
 
 export class ShellTool implements Tool {
@@ -55,21 +74,12 @@ export class ShellTool implements Tool {
   }
 
   async execute(args: Record<string, unknown>, context: ToolContext, onUpdate?: ToolUpdateCallback): Promise<ToolResult> {
-    let command = args.command as string
+    const command = args.command as string
     const cwd = (args.cwd as string) || context.workingDirectory
     const timeout = (args.timeout as number) || context.timeout
 
     if (!command) {
       return { output: 'Error: No command provided', isError: true }
-    }
-
-    // Detect background commands (ending with &) and ensure they produce output
-    // Also redirect background process output to file to prevent pipe staying open
-    const isBackground = /&\s*$/.test(command.trim())
-    if (isBackground && !command.includes('echo')) {
-      const logFile = `/tmp/agent_bg_${Date.now()}.log`
-      // Wrap: redirect bg process output to file, then echo completion
-      command = `{ ${command.trim().replace(/&\s*$/, '')} > ${logFile} 2>&1 & } && echo "Background process started, PID: $!, log: ${logFile}"`
     }
 
     const blockedCommands = ['rm -rf /', 'mkfs', 'dd if=', ':(){:|:&};:', 'shutdown', 'reboot']
@@ -78,6 +88,10 @@ export class ShellTool implements Tool {
       if (lowerCommand.includes(blocked)) {
         return { output: `Error: Command contains blocked pattern: "${blocked}"`, isError: true }
       }
+    }
+
+    if (isBackgroundCommand(command)) {
+      return this.executeBackground(command, cwd)
     }
 
     const isWindows = platform() === 'win32'
@@ -153,6 +167,41 @@ export class ShellTool implements Tool {
         })
       })
     })
+  }
+
+  private executeBackground(command: string, cwd: string): ToolResult {
+    const logFile = `/tmp/agent_bg_${Date.now()}.log`
+    const fgCommand = stripBgOperator(command)
+
+    const shell = getShellPath()
+    const isWindows = platform() === 'win32'
+    const fullCmd = isWindows
+      ? `${fgCommand} > "${logFile}" 2>&1`
+      : `${fgCommand} > "${logFile}" 2>&1`
+
+    try {
+      const out = openSync(logFile, 'w')
+      const child = spawn(shell, isWindows ? ['/c', fullCmd] : ['-c', fullCmd], {
+        cwd,
+        env: { ...process.env, FORCE_COLOR: '0' },
+        stdio: ['ignore', out, out],
+        detached: true,
+        windowsHide: true
+      })
+      child.unref()
+
+      const pid = child.pid
+      return {
+        output: `Background process started (PID: ${pid}).\nOutput log: ${logFile}\nTo check status: cat ${logFile}`,
+        isError: false,
+        metadata: { pid, logFile, background: true }
+      }
+    } catch (err) {
+      return {
+        output: `Failed to start background process: ${err instanceof Error ? err.message : String(err)}`,
+        isError: true
+      }
+    }
   }
 
   killAll(): void {
